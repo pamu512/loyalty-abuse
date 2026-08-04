@@ -103,3 +103,9 @@ class Database:
         if row is None:
             return None
         return Decision.model_validate_json(row["body_json"])
+
+    def list_decisions(self) -> list[Decision]:
+        rows = self._conn.execute(
+            "SELECT body_json FROM decisions ORDER BY created_at ASC, decision_id ASC"
+        ).fetchall()
+        return [Decision.model_validate_json(row["body_json"]) for row in rows]

@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from loyalty_abuse import evaluate
 from loyalty_abuse.features import FeatureStore
 from loyalty_abuse.schema import Decision, EventEnvelope
+from loyalty_abuse_api.analytics import build_summary
 from loyalty_abuse_api.db import Database
 
 
@@ -78,5 +79,10 @@ def create_app(db_path: str | Path = "loyalty_abuse.db") -> FastAPI:
         if decision is None:
             raise HTTPException(status_code=404, detail="decision not found")
         return decision.model_dump(mode="json")
+
+    @app.get("/v1/analytics/summary")
+    def get_analytics_summary() -> dict[str, Any]:
+        rows = [d.model_dump(mode="json") for d in app.state.db.list_decisions()]
+        return build_summary(rows)
 
     return app
