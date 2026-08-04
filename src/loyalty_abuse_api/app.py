@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from loyalty_abuse import evaluate
@@ -84,5 +85,9 @@ def create_app(db_path: str | Path = "loyalty_abuse.db") -> FastAPI:
     def get_analytics_summary() -> dict[str, Any]:
         rows = [d.model_dump(mode="json") for d in app.state.db.list_decisions()]
         return build_summary(rows)
+
+    static_dir = Path(__file__).resolve().parent.parent.parent / "static"
+    if static_dir.is_dir():
+        app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
 
     return app
