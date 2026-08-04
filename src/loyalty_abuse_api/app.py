@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -91,3 +92,7 @@ def create_app(db_path: str | Path = "loyalty_abuse.db") -> FastAPI:
         app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
 
     return app
+
+
+_db_path = os.environ.get("LOYALTY_ABUSE_DB", "loyalty_abuse.db")
+app = create_app(_db_path)
