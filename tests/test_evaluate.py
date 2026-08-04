@@ -103,4 +103,97 @@ def test_golden_tiers(case):
         store.observe(e)
     d = evaluate(events[-1], store)
     assert d.friction == FrictionAction(case["expected_friction"])
-    assert case["expected_reason_substring"] in " ".join(d.reasons)
+    if case["name"] == "allow_clean":
+        assert d.reasons == []
+        assert d.score < 25
+        return
+    needles = case.get("expected_reason_substrings")
+    if needles is None:
+        needles = [case["expected_reason_substring"]]
+    joined = " ".join(d.reasons)
+    for needle in needles:
+        assert needle in joined
+
+
+def test_code_leak_unique_user_spike():
+    store = FeatureStore()
+    code = "LEAKED25"
+    base_ts = "2026-08-04T12:{:02d}:00Z"
+    for i in range(24):
+        store.observe(
+            EventEnvelope(
+                event_id=f"r{i}",
+                tenant_id="t",
+                ts=base_ts.format(i % 60),
+                type=EventType.redeem,
+                account_id=f"u{i}",
+                session_id=f"s{i}",
+                device_id=f"d{i}",
+                ip="1.1.1.1",
+                payload={
+                    "reward_id": "r",
+                    "points": 1,
+                    "offer_ids": [],
+                    "promo_codes": [code],
+                    "channel": "app",
+                },
+            )
+        )
+    d = evaluate(
+        EventEnvelope(
+            event_id="r24",
+            tenant_id="t",
+            ts="2026-08-04T12:30:00Z",
+            type=EventType.redeem,
+            account_id="u24",
+            session_id="s24",
+            device_id="d24",
+            ip="1.1.1.1",
+            payload={
+                "reward_id": "r",
+                "points": 1,
+                "offer_ids": [],
+                "promo_codes": [code],
+                "channel": "app",
+            },
+        ),
+        store,
+    )
+    assert "code.unique_user_spike" in d.reasons
+
+
+def test_promo_stack_depth_reason():
+    store = FeatureStore()
+    store.observe(
+        EventEnvelope(
+            event_id="s1",
+            tenant_id="t",
+            ts="2026-08-01T00:00:00Z",
+            type=EventType.signup,
+            account_id="a",
+            session_id="s",
+            device_id="d",
+            ip="1.1.1.1",
+            payload={},
+        )
+    )
+    d = evaluate(
+        EventEnvelope(
+            event_id="r1",
+            tenant_id="t",
+            ts="2026-08-04T12:00:00Z",
+            type=EventType.redeem,
+            account_id="a",
+            session_id="s",
+            device_id="d",
+            ip="1.1.1.1",
+            payload={
+                "reward_id": "r",
+                "points": 10,
+                "offer_ids": ["o1", "o2", "o3"],
+                "channel": "app",
+            },
+        ),
+        store,
+    )
+    assert "promo.stack_depth" in d.reasons

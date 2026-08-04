@@ -2,7 +2,6 @@
   {
     "name": "allow_clean",
     "expected_friction": "allow",
-    "expected_reason_substring": "",
     "events": [
       {
         "event_id": "s1",
@@ -201,6 +200,7 @@
     "name": "block_stacked_signals",
     "expected_friction": "block",
     "expected_reason_substring": "bot.redeem_velocity",
+    "expected_reason_substrings": ["bot.redeem_velocity", "promo.stack_depth"],
     "events": [
       {
         "event_id": "s1",
