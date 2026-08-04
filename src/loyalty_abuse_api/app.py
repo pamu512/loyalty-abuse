@@ -1,0 +1,82 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+from loyalty_abuse import evaluate
+from loyalty_abuse.features import FeatureStore
+from loyalty_abuse.schema import Decision, EventEnvelope
+from loyalty_abuse_api.db import Database
+
+
+class EventIngestRequest(EventEnvelope):
+    evaluate: bool = False
+
+
+class EvaluateRequest(BaseModel):
+    event_id: str | None = None
+    event: EventEnvelope | None = None
+
+
+def _store_for_event(db: Database, event: EventEnvelope) -> FeatureStore:
+    # Rebuild from DB; only prior events — evaluate() observes the scored event.
+    store = FeatureStore()
+    for prior in db.list_tenant_events(event.tenant_id, exclude_event_id=event.event_id):
+        store.observe(prior)
+    return store
+
+
+def _run_evaluate(db: Database, event: EventEnvelope) -> Decision:
+    try:
+        db.save_event(event)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="event persist failed") from exc
+
+    store = _store_for_event(db, event)
+    decision = evaluate(event, store)
+
+    try:
+        db.save_decision(decision)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="decision audit failed") from exc
+    return decision
+
+
+def create_app(db_path: str | Path = "loyalty_abuse.db") -> FastAPI:
+    app = FastAPI(title="loyalty-abuse")
+    app.state.db = Database(db_path)
+
+    @app.post("/v1/events")
+    def post_events(body: EventIngestRequest) -> dict[str, Any]:
+        event = EventEnvelope.model_validate(body.model_dump(exclude={"evaluate"}))
+        if body.evaluate:
+            return _run_evaluate(app.state.db, event).model_dump(mode="json")
+        try:
+            app.state.db.save_event(event)
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="event persist failed") from exc
+        return {"event_id": event.event_id}
+
+    @app.post("/v1/evaluate")
+    def post_evaluate(body: EvaluateRequest) -> dict[str, Any]:
+        if body.event is not None:
+            event = body.event
+        elif body.event_id is not None:
+            event = app.state.db.get_event(body.event_id)
+            if event is None:
+                raise HTTPException(status_code=404, detail="event not found")
+        else:
+            raise HTTPException(status_code=422, detail="event_id or event required")
+        return _run_evaluate(app.state.db, event).model_dump(mode="json")
+
+    @app.get("/v1/decisions/{decision_id}")
+    def get_decision(decision_id: str) -> dict[str, Any]:
+        decision = app.state.db.get_decision(decision_id)
+        if decision is None:
+            raise HTTPException(status_code=404, detail="decision not found")
+        return decision.model_dump(mode="json")
+
+    return app

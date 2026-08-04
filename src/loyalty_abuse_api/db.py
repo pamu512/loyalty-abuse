@@ -1,0 +1,105 @@
+from __future__ import annotations
+
+import sqlite3
+from datetime import datetime, timezone
+from pathlib import Path
+
+from loyalty_abuse.schema import Decision, EventEnvelope
+
+
+class Database:
+    def __init__(self, path: str | Path) -> None:
+        self.path = str(path)
+        self._conn = sqlite3.connect(self.path, check_same_thread=False)
+        self._conn.row_factory = sqlite3.Row
+        self._init_schema()
+
+    def _init_schema(self) -> None:
+        self._conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS events (
+                event_id TEXT PRIMARY KEY,
+                tenant_id TEXT NOT NULL,
+                ts TEXT NOT NULL,
+                body_json TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS decisions (
+                decision_id TEXT PRIMARY KEY,
+                event_id TEXT NOT NULL,
+                body_json TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            """
+        )
+        self._conn.commit()
+
+    def save_event(self, event: EventEnvelope) -> None:
+        self._conn.execute(
+            """
+            INSERT OR REPLACE INTO events (event_id, tenant_id, ts, body_json)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                event.event_id,
+                event.tenant_id,
+                event.ts,
+                event.model_dump_json(),
+            ),
+        )
+        self._conn.commit()
+
+    def get_event(self, event_id: str) -> EventEnvelope | None:
+        row = self._conn.execute(
+            "SELECT body_json FROM events WHERE event_id = ?",
+            (event_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        return EventEnvelope.model_validate_json(row["body_json"])
+
+    def list_tenant_events(
+        self,
+        tenant_id: str,
+        *,
+        exclude_event_id: str | None = None,
+    ) -> list[EventEnvelope]:
+        rows = self._conn.execute(
+            """
+            SELECT body_json FROM events
+            WHERE tenant_id = ?
+            ORDER BY ts ASC, event_id ASC
+            """,
+            (tenant_id,),
+        ).fetchall()
+        out: list[EventEnvelope] = []
+        for row in rows:
+            ev = EventEnvelope.model_validate_json(row["body_json"])
+            if exclude_event_id is not None and ev.event_id == exclude_event_id:
+                continue
+            out.append(ev)
+        return out
+
+    def save_decision(self, decision: Decision) -> None:
+        created_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        self._conn.execute(
+            """
+            INSERT INTO decisions (decision_id, event_id, body_json, created_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                decision.decision_id,
+                decision.event_id,
+                decision.model_dump_json(),
+                created_at,
+            ),
+        )
+        self._conn.commit()
+
+    def get_decision(self, decision_id: str) -> Decision | None:
+        row = self._conn.execute(
+            "SELECT body_json FROM decisions WHERE decision_id = ?",
+            (decision_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        return Decision.model_validate_json(row["body_json"])
