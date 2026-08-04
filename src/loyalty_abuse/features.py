@@ -76,10 +76,18 @@ class FeatureStore:
         discount_depth = float(event.payload.get("discount_pct") or 0)
 
         redeem_5m = self._in_window(
-            now, d5m, lambda e: e.device_id == event.device_id and e.type == EventType.redeem
+            now,
+            d5m,
+            lambda e: e.device_id == event.device_id
+            and e.tenant_id == event.tenant_id
+            and e.type == EventType.redeem,
         )
         signup_5m = self._in_window(
-            now, d5m, lambda e: e.device_id == event.device_id and e.type == EventType.signup
+            now,
+            d5m,
+            lambda e: e.device_id == event.device_id
+            and e.tenant_id == event.tenant_id
+            and e.type == EventType.signup,
         )
 
         code = None
@@ -129,7 +137,12 @@ class FeatureStore:
                 ),
                 None,
             )
-            if red or event.type in {EventType.redeem, EventType.checkout}:
+            current_redeem_in_chain = (
+                event.type in {EventType.redeem, EventType.checkout}
+                and now >= _parse_ts(prof.ts)
+                and (now - login_t) <= timedelta(minutes=30)
+            )
+            if red or current_redeem_in_chain:
                 ato_chain = True
                 minutes_login_to_redeem = (now - login_t).total_seconds() / 60.0
                 break
