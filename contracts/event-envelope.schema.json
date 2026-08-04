@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "event-envelope.schema.json",
+  "title": "EventEnvelope",
+  "type": "object",
+  "required": [
+    "event_id",
+    "tenant_id",
+    "ts",
+    "type",
+    "account_id",
+    "session_id",
+    "device_id",
+    "ip"
+  ],
+  "properties": {
+    "event_id": { "type": "string" },
+    "tenant_id": { "type": "string" },
+    "ts": { "type": "string" },
+    "type": {
+      "type": "string",
+      "enum": [
+        "signup",
+        "login",
+        "profile_update",
+        "referral",
+        "offer_enroll",
+        "redeem",
+        "checkout"
+      ]
+    },
+    "account_id": { "type": "string" },
+    "session_id": { "type": "string" },
+    "device_id": { "type": "string" },
+    "ip": { "type": "string" },
+    "email": { "type": ["string", "null"] },
+    "phone": { "type": ["string", "null"] },
+    "payment_instrument_hash": { "type": ["string", "null"] },
+    "payload": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}

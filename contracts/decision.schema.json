@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "decision.schema.json",
+  "title": "Decision",
+  "type": "object",
+  "required": [
+    "decision_id",
+    "event_id",
+    "score",
+    "friction",
+    "reasons",
+    "typology_breakdown",
+    "features_snapshot"
+  ],
+  "properties": {
+    "decision_id": { "type": "string" },
+    "event_id": { "type": "string" },
+    "score": { "type": "integer" },
+    "friction": {
+      "type": "string",
+      "enum": [
+        "allow",
+        "throttle",
+        "soft_challenge",
+        "hard_challenge",
+        "block"
+      ]
+    },
+    "reasons": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "typology_breakdown": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "points"],
+        "properties": {
+          "id": { "type": "string" },
+          "points": { "type": "integer" },
+          "reasons": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "features_snapshot": { "type": "object", "additionalProperties": true },
+    "policy_version": { "type": "string", "default": "friction_v1" },
+    "schema_version": { "type": "integer", "default": 1 }
+  },
+  "additionalProperties": false
+}

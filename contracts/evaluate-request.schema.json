@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "evaluate-request.schema.json",
+  "title": "EvaluateRequest",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["event_id"],
+      "properties": {
+        "event_id": { "type": "string" },
+        "evaluate": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": ["event"],
+      "properties": {
+        "event": { "$ref": "event-envelope.schema.json" },
+        "evaluate": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  ]
+}
