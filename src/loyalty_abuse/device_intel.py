@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from typing import Any
 
 INTEL_HIGH_RISK_REASON = "intel.incognia_high_risk"
+INTEL_UNAVAILABLE_REASON = "intel.incognia_unavailable"
 
 _SIGNAL_KEYS = (
     "risk_assessment",
@@ -63,3 +64,7 @@ def intel_force_hard_floor(snapshot_or_payload: dict) -> bool:
     if snapshot_or_payload.get("device_intel_force_block") is True:
         return True
     return intel_signals_hard_floor(snapshot_or_payload)
+
+
+def intel_unavailable(snapshot_or_payload: dict) -> bool:
+    return _device_intel(snapshot_or_payload).get("source") == "unavailable"

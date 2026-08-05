@@ -173,3 +173,38 @@ def test_device_intel_force_block_forces_hard_floor_without_high_risk_reason():
     )
     assert d.friction in {FrictionAction.hard_challenge, FrictionAction.block}
     assert "intel.incognia_high_risk" not in d.reasons
+
+
+def test_unavailable_source_emits_unavailable_reason():
+    store = FeatureStore()
+    store.observe(
+        EventEnvelope(
+            event_id="s1",
+            tenant_id="t",
+            ts="2026-08-01T00:00:00Z",
+            type=EventType.signup,
+            account_id="a",
+            session_id="s",
+            device_id="d",
+            ip="1.1.1.1",
+            payload={},
+        )
+    )
+    payload = apply_to_payload(
+        {"reward_id": "r", "points": 10, "offer_ids": ["one"], "channel": "app"},
+        {
+            "risk_assessment": "unknown_risk",
+            "tamper_suspected": False,
+            "emulator": False,
+            "gps_spoofing": False,
+            "location_permission_enabled": None,
+            "device_fraud_reputation": None,
+            "known_account": None,
+            "raw_id": None,
+            "source": "unavailable",
+        },
+    )
+    d = evaluate(_clean_redeem(payload=payload), store)
+    assert "intel.incognia_unavailable" in d.reasons
+    assert "intel.incognia_high_risk" not in d.reasons
+    assert d.friction == FrictionAction.allow

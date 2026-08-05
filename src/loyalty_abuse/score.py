@@ -6,7 +6,9 @@ from loyalty_abuse.calibrate import predict_calibrated
 from loyalty_abuse.calibration import load_calibration
 from loyalty_abuse.device_intel import (
     INTEL_HIGH_RISK_REASON,
+    INTEL_UNAVAILABLE_REASON,
     intel_signals_hard_floor,
+    intel_unavailable,
 )
 from loyalty_abuse.economics import expected_costs, liability_usd
 from loyalty_abuse.features import FeatureStore
@@ -38,10 +40,11 @@ def evaluate(
     score = int(round(100.0 * clip(weighted)))
     active = [r for r in results if r.confidence > 0]
     reasons = [code for tr in active for code in tr.reasons]
-    if intel_signals_hard_floor(snap) or intel_signals_hard_floor(
-        event.payload if isinstance(event.payload, dict) else {}
-    ):
+    payload = event.payload if isinstance(event.payload, dict) else {}
+    if intel_signals_hard_floor(snap) or intel_signals_hard_floor(payload):
         reasons.append(INTEL_HIGH_RISK_REASON)
+    if intel_unavailable(snap) or intel_unavailable(payload):
+        reasons.append(INTEL_UNAVAILABLE_REASON)
     friction = policy.action_for(score, force_hard_floor=bool(snap.get("force_hard_floor")))
     p_abuse = predict_calibrated(score / 100.0)
     loss_usd, insult_usd = expected_costs(

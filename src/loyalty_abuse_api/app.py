@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import time
 from pathlib import Path
 from typing import Any
 
@@ -8,11 +9,71 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from adapters.incognia import fetch_signals
+from adapters.incognia.normalize import normalize_assessment
 from loyalty_abuse import evaluate
+from loyalty_abuse.device_intel import apply_to_payload
 from loyalty_abuse.features import FeatureStore
-from loyalty_abuse.schema import Decision, EventEnvelope
+from loyalty_abuse.schema import Decision, EventEnvelope, EventType
 from loyalty_abuse_api.analytics import build_summary
 from loyalty_abuse_api.db import Database
+
+_FAIL_CLOSED_TYPES = frozenset({EventType.redeem, EventType.checkout})
+
+
+def _env_flag(name: str, default: str = "false") -> bool:
+    return os.environ.get(name, default).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _request_token(payload: dict[str, Any]) -> str | None:
+    tok = payload.get("request_token")
+    if tok is None or tok == "":
+        tok = payload.get("incognia_request_token")
+    if tok is None or tok == "":
+        return None
+    return str(tok)
+
+
+def _incognia_required(payload: dict[str, Any]) -> bool:
+    if "incognia_required" in payload:
+        return bool(payload["incognia_required"])
+    return _env_flag("INCOGNIA_REQUIRED_DEFAULT", "false")
+
+
+def _enrich_incognia(db: Database, event: EventEnvelope) -> EventEnvelope:
+    """Fetch Incognia when token present; fail-closed injects device_intel_force_block."""
+    payload = dict(event.payload) if isinstance(event.payload, dict) else {}
+    token = _request_token(payload)
+    if token is None:
+        return event
+
+    t0 = time.perf_counter()
+    try:
+        signals = fetch_signals(
+            request_token=token,
+            account_id=event.account_id,
+            event_type=event.type.value,
+            external_id=event.event_id,
+        )
+    except Exception:
+        signals = normalize_assessment({}, source="unavailable")
+    latency_ms = int(round((time.perf_counter() - t0) * 1000))
+    source = getattr(signals, "source", None)
+    db.log_intel_call(
+        event_id=event.event_id,
+        vendor="incognia",
+        success=source != "unavailable",
+        latency_ms=latency_ms,
+        source=source if isinstance(source, str) else None,
+    )
+    payload = apply_to_payload(payload, signals)
+    if (
+        source == "unavailable"
+        and _incognia_required(payload)
+        and event.type in _FAIL_CLOSED_TYPES
+    ):
+        payload["device_intel_force_block"] = True
+    return event.model_copy(update={"payload": payload})
 
 
 class EventIngestRequest(EventEnvelope):
@@ -50,6 +111,7 @@ def _resolve_event(db: Database, body: EvaluateRequest | ShadowEvaluateRequest) 
 
 
 def _run_evaluate(db: Database, event: EventEnvelope) -> Decision:
+    event = _enrich_incognia(db, event)
     try:
         db.save_event(event)
     except Exception as exc:
@@ -71,6 +133,7 @@ def _run_shadow_evaluate(
     *,
     host_friction: str | None = None,
 ) -> Decision:
+    event = _enrich_incognia(db, event)
     try:
         db.save_event(event)
     except Exception as exc:

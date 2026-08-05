@@ -37,6 +37,15 @@ class Database:
                 body_json TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS intel_calls (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_id TEXT NOT NULL,
+                vendor TEXT NOT NULL,
+                success INTEGER NOT NULL,
+                latency_ms INTEGER NOT NULL,
+                source TEXT,
+                created_at TEXT NOT NULL
+            );
             """
         )
         self._conn.commit()
@@ -158,6 +167,54 @@ class Database:
                 "recommended_friction": row["recommended_friction"],
                 "host_friction": row["host_friction"],
                 "body_json": row["body_json"],
+                "created_at": row["created_at"],
+            }
+            for row in rows
+        ]
+
+    def log_intel_call(
+        self,
+        *,
+        event_id: str,
+        vendor: str,
+        success: bool,
+        latency_ms: int,
+        source: str | None = None,
+    ) -> None:
+        created_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        self._conn.execute(
+            """
+            INSERT INTO intel_calls (
+                event_id, vendor, success, latency_ms, source, created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                event_id,
+                vendor,
+                1 if success else 0,
+                int(latency_ms),
+                source,
+                created_at,
+            ),
+        )
+        self._conn.commit()
+
+    def list_intel_calls(self) -> list[dict]:
+        rows = self._conn.execute(
+            """
+            SELECT event_id, vendor, success, latency_ms, source, created_at
+            FROM intel_calls
+            ORDER BY id ASC
+            """
+        ).fetchall()
+        return [
+            {
+                "event_id": row["event_id"],
+                "vendor": row["vendor"],
+                "success": bool(row["success"]),
+                "latency_ms": int(row["latency_ms"]),
+                "source": row["source"],
                 "created_at": row["created_at"],
             }
             for row in rows
