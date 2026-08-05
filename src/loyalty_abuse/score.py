@@ -12,10 +12,11 @@ from loyalty_abuse.device_intel import (
 )
 from loyalty_abuse.economics import expected_costs, liability_usd
 from loyalty_abuse.features import FeatureStore
+from loyalty_abuse.floors import apply_soft_floors, max_friction
 from loyalty_abuse.interactions import blend_raw, interaction_results
 from loyalty_abuse.mathutil import clip
 from loyalty_abuse.policy import FrictionPolicy
-from loyalty_abuse.schema import Decision, EventEnvelope, POLICY_VERSION
+from loyalty_abuse.schema import Decision, EventEnvelope, FrictionAction, POLICY_VERSION
 from loyalty_abuse.typologies import ALL_SCORERS
 
 
@@ -50,7 +51,17 @@ def evaluate(
         reasons.append(INTEL_HIGH_RISK_REASON)
     if intel_unavailable(snap) or intel_unavailable(payload):
         reasons.append(INTEL_UNAVAILABLE_REASON)
-    friction = policy.action_for(score, force_hard_floor=bool(snap.get("force_hard_floor")))
+    # Order: score band → soft floors → hard floor minimum
+    band = policy.action_for(score, force_hard_floor=False)
+    friction, floor_reasons = apply_soft_floors(
+        band,
+        snapshot=snap,
+        confidences=conf,
+        soft_floors=cal.get("soft_floors") or [],
+    )
+    if snap.get("force_hard_floor"):
+        friction = max_friction(friction, FrictionAction.hard_challenge)
+    reasons.extend(floor_reasons)
     p_abuse = predict_calibrated(score / 100.0)
     loss_usd, insult_usd = expected_costs(
         liability_usd(event), p_abuse, friction, cost=cal.get("cost")
