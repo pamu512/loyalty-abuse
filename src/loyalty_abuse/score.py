@@ -12,6 +12,7 @@ from loyalty_abuse.device_intel import (
 )
 from loyalty_abuse.economics import expected_costs, liability_usd
 from loyalty_abuse.features import FeatureStore
+from loyalty_abuse.interactions import blend_raw, interaction_results
 from loyalty_abuse.mathutil import clip
 from loyalty_abuse.policy import FrictionPolicy
 from loyalty_abuse.schema import Decision, EventEnvelope, POLICY_VERSION
@@ -36,9 +37,13 @@ def evaluate(
     snap = store.snapshot(event)
     results = [s(snap) for s in ALL_SCORERS]
     weights = cal["weights"]
-    weighted = sum(float(weights.get(r.id) or 0.0) * float(r.confidence) for r in results)
-    score = int(round(100.0 * clip(weighted)))
+    conf = {r.id: r.confidence for r in results}
+    ix_cfg = cal.get("interactions") or []
+    ix_rows = interaction_results(conf, ix_cfg)
+    raw = blend_raw(weights, conf, ix_cfg)
+    score = int(round(100.0 * clip(raw)))
     active = [r for r in results if r.confidence > 0]
+    breakdown = active + [r for r in ix_rows if r.points > 0]
     reasons = [code for tr in active for code in tr.reasons]
     payload = event.payload if isinstance(event.payload, dict) else {}
     if intel_signals_hard_floor(snap) or intel_signals_hard_floor(payload):
@@ -56,7 +61,7 @@ def evaluate(
         score=score,
         friction=friction,
         reasons=reasons,
-        typology_breakdown=active,
+        typology_breakdown=breakdown,
         features_snapshot=snap,
         policy_version=policy.version,
         expected_loss_usd=loss_usd,

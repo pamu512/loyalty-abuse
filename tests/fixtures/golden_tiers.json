@@ -198,7 +198,7 @@
   },
   {
     "name": "soft_challenge_stacked_signals",
-    "expected_friction": "soft_challenge",
+    "expected_friction": "block",
     "expected_reason_substring": "bot.redeem_velocity",
     "expected_reason_substrings": ["bot.redeem_velocity", "promo.stack_depth"],
     "events": [
