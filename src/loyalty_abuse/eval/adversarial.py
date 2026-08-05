@@ -1,4 +1,14 @@
-"""Adversarial eval suite — primary honest B+ proof for friction_v1_2."""
+"""Adversarial eval suite — primary honest B+ proof for friction_v1_2.
+
+Honest B+ claim (what passing gates proves):
+1. Catch slices (device_rotation, slow_multi_acct, sequential_promo) are multi-signal
+   journeys under weighted_sum — no single typology reaches soft_challenge alone
+   (max weight ~0.28 → score ≤28; soft_challenge band starts at 45).
+2. Anti-vanity: catch forbids velocity hard_floor padding; caught journeys must
+   include expected typology reason families (multi_acct.*, promo.*, etc.).
+3. ato_known_device uses hybrid hard_floor via ato_chain — known-device confidence
+   contributes to score; friction elevation may be floor-driven.
+"""
 from __future__ import annotations
 
 import random

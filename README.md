@@ -82,6 +82,8 @@ python scripts/adversarial_eval.py --seed 42 --out artifacts/adversarial_v1_2.js
 
 Exit code 0 only when all slice bounds pass (household FP allow-rate, device-rotation / slow-multi / sequential-promo / known-device ATO catch-rates). See `src/loyalty_abuse/eval/adversarial.py` for published bounds.
 
+**Honest B+ claim:** Catch slices stack multiple typologies under `weighted_sum` (single typology capped ~28, below soft_challenge at 45). Anti-vanity forbids velocity hard_floor padding without pattern reason families. `ato_known_device` may elevate via `ato_chain` hybrid hard_floor while confidence still contributes to score.
+
 The synthetic 500k eval (`scripts/synth_eval.py`) is **regression-only** — it must not be cited as the B+ grade claim.
 
 After decisions are persisted:
