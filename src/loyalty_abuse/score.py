@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import uuid
 
+from loyalty_abuse.calibration import load_calibration
 from loyalty_abuse.features import FeatureStore
+from loyalty_abuse.mathutil import clip
 from loyalty_abuse.policy import FrictionPolicy
-from loyalty_abuse.schema import Decision, EventEnvelope
+from loyalty_abuse.schema import Decision, EventEnvelope, POLICY_VERSION
 from loyalty_abuse.typologies import ALL_SCORERS
 
 
@@ -13,13 +15,29 @@ def evaluate(
     store: FeatureStore,
     policy: FrictionPolicy | None = None,
 ) -> Decision:
-    policy = policy or FrictionPolicy()
+    cal = load_calibration()
+    bands = cal["bands"]
+    policy = policy or FrictionPolicy(
+        allow_max=int(bands["allow_max"]),
+        throttle_max=int(bands["throttle_max"]),
+        soft_max=int(bands["soft_max"]),
+        hard_max=int(bands["hard_max"]),
+        version=str(cal.get("policy_version") or POLICY_VERSION),
+    )
     store.observe(event)
     snap = store.snapshot(event)
     results = [s(snap) for s in ALL_SCORERS]
-    results = [r for r in results if r.points > 0]
-    score = min(100, sum(r.points for r in results))
-    reasons = [r for tr in results for r in tr.reasons]
+    weights = cal["weights"]
+    weighted = 0.0
+    for r in results:
+        w = float(weights.get(r.id) or 0.0)
+        weighted += w * float(r.confidence)
+    # max_weight_normalize: one typology at c=1 can reach score 100
+    max_w = max(float(v) for v in weights.values()) or 1.0
+    raw = weighted / max_w
+    score = int(round(100.0 * clip(raw)))
+    active = [r for r in results if r.confidence > 0]
+    reasons = [code for tr in active for code in tr.reasons]
     friction = policy.action_for(score, force_hard_floor=bool(snap.get("force_hard_floor")))
     return Decision(
         decision_id="dec_" + uuid.uuid4().hex,
@@ -27,7 +45,7 @@ def evaluate(
         score=score,
         friction=friction,
         reasons=reasons,
-        typology_breakdown=results,
+        typology_breakdown=active,
         features_snapshot=snap,
         policy_version=policy.version,
     )

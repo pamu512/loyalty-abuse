@@ -41,8 +41,12 @@ class FeatureStore:
         now = _parse_ts(event.ts)
         d24 = timedelta(hours=24)
         d5m = timedelta(minutes=5)
-        on_device = self._in_window(now, d24, lambda e: e.device_id == event.device_id and e.tenant_id == event.tenant_id)
-        on_ip = self._in_window(now, d24, lambda e: e.ip == event.ip and e.tenant_id == event.tenant_id)
+        on_device = self._in_window(
+            now, d24, lambda e: e.device_id == event.device_id and e.tenant_id == event.tenant_id
+        )
+        on_ip = self._in_window(
+            now, d24, lambda e: e.ip == event.ip and e.tenant_id == event.tenant_id
+        )
         accounts_device = {e.account_id for e in on_device}
         accounts_ip = {e.account_id for e in on_ip}
 
@@ -51,23 +55,34 @@ class FeatureStore:
             root = _email_root(e.email)
             if root:
                 roots[root].add(e.account_id)
-        email_alias_burst = any(len(v) >= 3 for v in roots.values())
+        current_root = _email_root(event.email)
+        if current_root is None:
+            # fall back to any email root seen for this account
+            for e in self._events:
+                if e.account_id == event.account_id and e.tenant_id == event.tenant_id:
+                    current_root = _email_root(e.email)
+                    if current_root:
+                        break
+        email_alias_burst = bool(
+            current_root and len(roots.get(current_root, set())) >= 3
+        )
 
         referral_shared_device = False
         referral_shared_payment = False
         if event.type == EventType.referral:
             ref = str(event.payload.get("referrer_id") or "")
             ree = str(event.payload.get("referee_id") or event.account_id)
-            devices = {}
-            pays = {}
+            devices: dict[str, set[str]] = defaultdict(set)
+            pays: dict[str, set[str]] = defaultdict(set)
             for e in self._events:
                 if e.tenant_id != event.tenant_id:
                     continue
-                devices[e.account_id] = e.device_id
+                devices[e.account_id].add(e.device_id)
                 if e.payment_instrument_hash:
-                    pays[e.account_id] = e.payment_instrument_hash
-            referral_shared_device = bool(ref and ree and devices.get(ref) and devices.get(ref) == devices.get(ree))
-            referral_shared_payment = bool(ref and ree and pays.get(ref) and pays.get(ref) == pays.get(ree))
+                    pays[e.account_id].add(e.payment_instrument_hash)
+            if ref and ree:
+                referral_shared_device = bool(devices.get(ref, set()) & devices.get(ree, set()))
+                referral_shared_payment = bool(pays.get(ref, set()) & pays.get(ree, set()))
 
         offers = list(event.payload.get("offer_ids") or [])
         promos = list(event.payload.get("promo_codes") or [])
@@ -102,9 +117,16 @@ class FeatureStore:
                 if code in plist or e.payload.get("referral_code") == code:
                     code_users.add(e.account_id)
 
-        acct_events = [e for e in self._events if e.account_id == event.account_id and e.tenant_id == event.tenant_id]
+        acct_events = [
+            e
+            for e in self._events
+            if e.account_id == event.account_id and e.tenant_id == event.tenant_id
+        ]
         acct_events_sorted = sorted(acct_events, key=lambda e: _parse_ts(e.ts))
-        signup_ts = next((_parse_ts(e.ts) for e in acct_events_sorted if e.type == EventType.signup), None)
+        signup_ts = next(
+            (_parse_ts(e.ts) for e in acct_events_sorted if e.type == EventType.signup),
+            None,
+        )
         account_age_minutes = (now - signup_ts).total_seconds() / 60.0 if signup_ts else 0.0
         minutes_signup_to_event = account_age_minutes
 
@@ -114,14 +136,15 @@ class FeatureStore:
         for i, e in enumerate(recent):
             if e.type != EventType.login:
                 continue
-            if not (e.payload.get("new_device") or e.payload.get("geo")):
+            if not (e.payload.get("new_device") is True or e.payload.get("new_geo") is True):
                 continue
             login_t = _parse_ts(e.ts)
             prof = next(
                 (
                     p
                     for p in recent[i + 1 :]
-                    if p.type == EventType.profile_update and (_parse_ts(p.ts) - login_t) <= timedelta(minutes=30)
+                    if p.type == EventType.profile_update
+                    and (_parse_ts(p.ts) - login_t) <= timedelta(minutes=30)
                 ),
                 None,
             )

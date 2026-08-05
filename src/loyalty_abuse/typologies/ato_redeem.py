@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from loyalty_abuse.schema import TypologyResult
+from loyalty_abuse.calibration import load_calibration
+from loyalty_abuse.typologies._contrib import result
 
 
 def score(snapshot: dict[str, Any]) -> TypologyResult:
-    points, reasons = 0, []
+    cal = load_calibration()
     if snapshot.get("ato_chain"):
-        points += 40
-        reasons.append("ato.login_profile_redeem_chain")
-    return TypologyResult(id="ato_redeem", points=points, reasons=reasons)
+        c = float(cal.get("ato_confidence") or 0.85)
+        return result("ato_redeem", c, ["ato.login_profile_redeem_chain"])
+    return result("ato_redeem", 0.0, [])

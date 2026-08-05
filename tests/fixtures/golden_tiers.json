@@ -136,7 +136,7 @@
   },
   {
     "name": "hard_ato_chain",
-    "expected_friction": "hard_challenge",
+    "expected_friction": "block",
     "expected_reason_substring": "ato.login_profile_redeem_chain",
     "events": [
       {

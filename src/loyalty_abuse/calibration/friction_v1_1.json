@@ -1,0 +1,39 @@
+{
+  "policy_version": "friction_v1_1",
+  "blend": "max_weight_normalize",
+  "weights": {
+    "ato_redeem": 0.22,
+    "multi_account": 0.18,
+    "bot_redeem": 0.18,
+    "referral_self_deal": 0.14,
+    "code_leak": 0.14,
+    "promo_stack": 0.14
+  },
+  "bands": {
+    "allow_max": 24,
+    "throttle_max": 44,
+    "soft_max": 64,
+    "hard_max": 84
+  },
+  "sat": {
+    "accounts_on_device_24h": { "a": 2, "b": 5 },
+    "accounts_on_ip_24h": { "a": 3, "b": 10 },
+    "redeem_count_5m": { "a": 4, "b": 16 },
+    "signup_count_5m": { "a": 3, "b": 12 },
+    "code_unique_users_24h": { "a": 15, "b": 50 },
+    "stack_depth": { "a": 2, "b": 5 },
+    "discount_depth": { "a": 30, "b": 70 }
+  },
+  "hard_floor": {
+    "redeem_5m": 20,
+    "signup_5m": 15
+  },
+  "young_account_minutes": 60,
+  "young_bot_mult": 1.15,
+  "young_multi_mult": 1.1,
+  "ato_confidence": 0.85,
+  "email_burst_confidence": 0.75,
+  "referral_shared_device_c": 0.9,
+  "referral_shared_payment_c": 0.85,
+  "referral_both_c": 1.0
+}

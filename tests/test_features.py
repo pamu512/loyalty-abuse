@@ -101,6 +101,61 @@ def test_ato_chain_false_when_redeem_after_30m():
     assert snap["minutes_login_to_redeem"] is None
 
 
+def test_ato_requires_new_device_not_bare_geo():
+    store = FeatureStore()
+    store.observe(_e(event_id="1", type=EventType.signup, ts="2026-08-04T10:00:00Z", account_id="a1", device_id="old"))
+    store.observe(
+        _e(
+            event_id="2",
+            type=EventType.login,
+            ts="2026-08-04T12:00:00Z",
+            account_id="a1",
+            device_id="new",
+            payload={"success": True, "geo": "XX"},
+        )
+    )
+    store.observe(
+        _e(
+            event_id="3",
+            type=EventType.profile_update,
+            ts="2026-08-04T12:01:00Z",
+            account_id="a1",
+            device_id="new",
+            payload={"fields_changed": ["email"]},
+        )
+    )
+    snap = store.snapshot(
+        _e(
+            event_id="4",
+            type=EventType.redeem,
+            ts="2026-08-04T12:02:00Z",
+            account_id="a1",
+            device_id="new",
+            payload={"reward_id": "r", "points": 50, "offer_ids": [], "channel": "app"},
+        )
+    )
+    assert snap["ato_chain"] is False
+
+
+def test_email_alias_burst_scoped_to_current_root():
+    store = FeatureStore()
+    store.observe(_e(event_id="1", account_id="a1", email="same+1@ex.com", ts="2026-08-04T12:00:00Z"))
+    store.observe(_e(event_id="2", account_id="a2", email="same+2@ex.com", ts="2026-08-04T12:01:00Z"))
+    store.observe(_e(event_id="3", account_id="a3", email="same+3@ex.com", ts="2026-08-04T12:02:00Z"))
+    # unrelated burst on another root should not flag current account
+    store.observe(_e(event_id="4", account_id="b1", email="other+1@ex.com", ts="2026-08-04T12:03:00Z"))
+    store.observe(_e(event_id="5", account_id="b2", email="other+2@ex.com", ts="2026-08-04T12:04:00Z"))
+    store.observe(_e(event_id="6", account_id="b3", email="other+3@ex.com", ts="2026-08-04T12:05:00Z"))
+    snap_other = store.snapshot(
+        _e(event_id="7", account_id="z1", email="lonely@ex.com", type=EventType.redeem, ts="2026-08-04T12:06:00Z", payload={})
+    )
+    assert snap_other["email_alias_burst"] is False
+    snap_same = store.snapshot(
+        _e(event_id="8", account_id="a1", email="same+9@ex.com", type=EventType.redeem, ts="2026-08-04T12:07:00Z", payload={})
+    )
+    assert snap_same["email_alias_burst"] is True
+
+
 def test_velocity_counts_ignore_other_tenant():
     store = FeatureStore()
     store.observe(

@@ -6,7 +6,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 SCHEMA_VERSION = 1
-POLICY_VERSION = "friction_v1"
+POLICY_VERSION = "friction_v1_1"
 
 
 class FrictionAction(str, Enum):
@@ -45,6 +45,7 @@ class EventEnvelope(BaseModel):
 class TypologyResult(BaseModel):
     id: str
     points: int
+    confidence: float = 0.0
     reasons: list[str] = Field(default_factory=list)
 
 
