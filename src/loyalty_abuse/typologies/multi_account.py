@@ -3,18 +3,31 @@ from __future__ import annotations
 from typing import Any
 
 from loyalty_abuse.calibration import load_calibration, sat_params
-from loyalty_abuse.mathutil import sat
+from loyalty_abuse.mathutil import sat, soft_or
+from loyalty_abuse.schema import TypologyResult
 from loyalty_abuse.typologies._contrib import result
 
 
 def score(snapshot: dict[str, Any]) -> TypologyResult:
     cal = load_calibration()
-    a_d, b_d = sat_params("accounts_on_device_24h")
-    a_i, b_i = sat_params("accounts_on_ip_24h")
-    c_dev = sat(float(snapshot.get("accounts_on_device_24h") or 0), a_d, b_d)
-    c_ip = sat(float(snapshot.get("accounts_on_ip_24h") or 0), a_i, b_i)
-    c_email = float(cal.get("email_burst_confidence") or 0.75) if snapshot.get("email_alias_burst") else 0.0
-    c = max(c_dev, c_ip, c_email)
+    c_dev = soft_or(
+        [
+            sat(float(snapshot.get("accounts_on_device_1h") or 0), *sat_params("accounts_on_device_1h")),
+            sat(float(snapshot.get("accounts_on_device_24h") or 0), *sat_params("accounts_on_device_24h")),
+            sat(float(snapshot.get("accounts_on_device_7d") or 0), *sat_params("accounts_on_device_7d")),
+        ]
+    )
+    c_ip = soft_or(
+        [
+            sat(float(snapshot.get("accounts_on_ip_1h") or 0), *sat_params("accounts_on_ip_1h")),
+            sat(float(snapshot.get("accounts_on_ip_24h") or 0), *sat_params("accounts_on_ip_24h")),
+            sat(float(snapshot.get("accounts_on_ip_7d") or 0), *sat_params("accounts_on_ip_7d")),
+        ]
+    )
+    c_email = (
+        float(cal.get("email_burst_confidence") or 0.75) if snapshot.get("email_alias_burst") else 0.0
+    )
+    c = soft_or([c_dev, c_ip, c_email])
     young = float(cal.get("young_account_minutes") or 60)
     if float(snapshot.get("account_age_minutes") or 0) < young and int(
         snapshot.get("accounts_on_device_24h") or 0

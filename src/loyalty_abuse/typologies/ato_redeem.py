@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from loyalty_abuse.calibration import load_calibration
+from loyalty_abuse.schema import TypologyResult
 from loyalty_abuse.typologies._contrib import result
 
 
