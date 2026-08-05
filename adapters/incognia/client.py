@@ -18,7 +18,8 @@ _ENV_KEYS = (
 _DEFAULT_FIXTURE = "login_low_risk"
 
 
-def _env_ready() -> bool:
+def env_creds_ready() -> bool:
+    """True when all three Incognia env vars are non-empty."""
     return all(os.environ.get(k) for k in _ENV_KEYS)
 
 
@@ -71,8 +72,12 @@ def fetch_signals(
     external_id: str | None = None,
     fixture_name: str | None = None,
 ) -> IncogniaSignals:
-    """Live if env creds present and SDK importable; else load fixture (default login_low_risk)."""
-    if not _env_ready():
+    """Live if env creds present and SDK importable; else load fixture (default login_low_risk).
+
+    Direct/unit use may rely on the fixture fallback. The API production path must not
+    call this without creds unless an explicit fixture flag is set on the payload.
+    """
+    if not env_creds_ready():
         return _load_fixture(fixture_name or _DEFAULT_FIXTURE)
 
     try:

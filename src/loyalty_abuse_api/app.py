@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from adapters.incognia import fetch_signals
+from adapters.incognia import env_creds_ready, fetch_signals
 from adapters.incognia.normalize import normalize_assessment
 from loyalty_abuse import evaluate
 from loyalty_abuse.device_intel import apply_to_payload
@@ -40,24 +40,20 @@ def _incognia_required(payload: dict[str, Any]) -> bool:
     return _env_flag("INCOGNIA_REQUIRED_DEFAULT", "false")
 
 
-def _enrich_incognia(db: Database, event: EventEnvelope) -> EventEnvelope:
-    """Fetch Incognia when token present; fail-closed injects device_intel_force_block."""
-    payload = dict(event.payload) if isinstance(event.payload, dict) else {}
-    token = _request_token(payload)
-    if token is None:
-        return event
+def _incognia_use_fixture(payload: dict[str, Any]) -> bool:
+    """Offline/test only — never default-on in production."""
+    return bool(payload.get("incognia_fixture") or payload.get("incognia_use_fixture"))
 
-    t0 = time.perf_counter()
-    try:
-        signals = fetch_signals(
-            request_token=token,
-            account_id=event.account_id,
-            event_type=event.type.value,
-            external_id=event.event_id,
-        )
-    except Exception:
-        signals = normalize_assessment({}, source="unavailable")
-    latency_ms = int(round((time.perf_counter() - t0) * 1000))
+
+def _log_and_apply_intel(
+    db: Database,
+    event: EventEnvelope,
+    payload: dict[str, Any],
+    signals: Any,
+    *,
+    latency_ms: int,
+    force_block: bool,
+) -> EventEnvelope:
     source = getattr(signals, "source", None)
     db.log_intel_call(
         event_id=event.event_id,
@@ -67,13 +63,66 @@ def _enrich_incognia(db: Database, event: EventEnvelope) -> EventEnvelope:
         source=source if isinstance(source, str) else None,
     )
     payload = apply_to_payload(payload, signals)
-    if (
-        source == "unavailable"
-        and _incognia_required(payload)
-        and event.type in _FAIL_CLOSED_TYPES
-    ):
+    if force_block:
         payload["device_intel_force_block"] = True
     return event.model_copy(update={"payload": payload})
+
+
+def _enrich_incognia(db: Database, event: EventEnvelope) -> EventEnvelope:
+    """Fetch Incognia when token present; fail-closed injects device_intel_force_block.
+
+    Missing env creds with a token → unavailable (no silent low_risk fixture) unless
+    payload sets ``incognia_fixture`` / ``incognia_use_fixture``. Required redeem/checkout
+    with no token also fail-closed.
+    """
+    payload = dict(event.payload) if isinstance(event.payload, dict) else {}
+    token = _request_token(payload)
+    required = _incognia_required(payload)
+    fail_closed_type = event.type in _FAIL_CLOSED_TYPES
+    use_fixture = _incognia_use_fixture(payload)
+
+    if token is None:
+        if required and fail_closed_type:
+            t0 = time.perf_counter()
+            signals = normalize_assessment({}, source="unavailable")
+            latency_ms = int(round((time.perf_counter() - t0) * 1000))
+            return _log_and_apply_intel(
+                db,
+                event,
+                payload,
+                signals,
+                latency_ms=latency_ms,
+                force_block=True,
+            )
+        return event
+
+    t0 = time.perf_counter()
+    try:
+        # Production path: no creds → unavailable. Fixture only via explicit payload flag.
+        if not use_fixture and not env_creds_ready():
+            signals = normalize_assessment({}, source="unavailable")
+        else:
+            signals = fetch_signals(
+                request_token=token,
+                account_id=event.account_id,
+                event_type=event.type.value,
+                external_id=event.event_id,
+            )
+    except Exception:
+        signals = normalize_assessment({}, source="unavailable")
+    latency_ms = int(round((time.perf_counter() - t0) * 1000))
+    source = getattr(signals, "source", None)
+    force_block = (
+        source == "unavailable" and required and fail_closed_type
+    )
+    return _log_and_apply_intel(
+        db,
+        event,
+        payload,
+        signals,
+        latency_ms=latency_ms,
+        force_block=force_block,
+    )
 
 
 class EventIngestRequest(EventEnvelope):

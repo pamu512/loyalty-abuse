@@ -7,11 +7,17 @@ Core `loyalty_abuse` never imports this package or the vendor SDK.
 
 | Mode | When | `source` |
 |---|---|---|
-| Fixture / replay | Env creds absent (default offline) | `fixture` |
+| Fixture / replay | Env creds absent **and** caller opts in (adapter unit tests, or API payload `incognia_fixture` / `incognia_use_fixture=true`) | `fixture` |
 | Live | `INCOGNIA_CLIENT_ID`, `INCOGNIA_CLIENT_SECRET`, `INCOGNIA_POLICY_ID` set and optional extra installed | `live` |
-| Unavailable | Live call fails / SDK missing when required path degrades | `unavailable` |
+| Unavailable | Live call fails / SDK missing / API path has token but no env creds (no silent fixture) | `unavailable` |
 
-`fetch_signals` loads a fixture when env creds are absent; live SDK calls only when all three env vars are set and the `[incognia]` optional extra is installed.
+`fetch_signals` still loads a fixture when env creds are absent (handy for direct adapter tests). The **API enrich path does not** call that fallback unless the payload sets `incognia_fixture` or `incognia_use_fixture=true`; otherwise missing creds → `source=unavailable`.
+
+## Fail-closed / force floor
+
+When `incognia_required=true` on redeem/checkout and intel is unavailable (error, missing creds, or **missing request token**), the API sets `device_intel_force_block=true`.
+
+That flag forces a **hard floor** via policy: friction ≥ `hard_challenge` (not a literal `block`). Hosts should treat it as strong verification / hold, same ladder as other hard floors — `block` only if score/policy maps there after the floor.
 
 ## Env vars (live)
 

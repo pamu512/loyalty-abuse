@@ -7,6 +7,12 @@ from fastapi.testclient import TestClient
 
 from loyalty_abuse_api.app import create_app
 
+_INCOGNIA_ENV = (
+    "INCOGNIA_CLIENT_ID",
+    "INCOGNIA_CLIENT_SECRET",
+    "INCOGNIA_POLICY_ID",
+)
+
 
 def _redeem_event(*, payload: dict, event_id: str = "r_intel_1") -> dict:
     return {
@@ -75,6 +81,7 @@ def test_enrich_merges_signals_and_logs_intel_call(tmp_path, monkeypatch):
         seen.update(kw)
         return _high_risk_signals()
 
+    monkeypatch.setattr("loyalty_abuse_api.app.env_creds_ready", lambda: True)
     monkeypatch.setattr("adapters.incognia.fetch_signals", fake_fetch)
     monkeypatch.setattr("loyalty_abuse_api.app.fetch_signals", fake_fetch, raising=False)
 
@@ -112,6 +119,7 @@ def test_incognia_request_token_alias(tmp_path, monkeypatch):
         seen.append(kw["request_token"])
         return _high_risk_signals()
 
+    monkeypatch.setattr("loyalty_abuse_api.app.env_creds_ready", lambda: True)
     monkeypatch.setattr("adapters.incognia.fetch_signals", fake_fetch)
     monkeypatch.setattr("loyalty_abuse_api.app.fetch_signals", fake_fetch, raising=False)
 
@@ -126,6 +134,7 @@ def test_incognia_request_token_alias(tmp_path, monkeypatch):
 def test_fail_closed_unavailable_required_redeem(tmp_path, monkeypatch):
     app = create_app(db_path=tmp_path / "t.db")
     client = TestClient(app)
+    monkeypatch.setattr("loyalty_abuse_api.app.env_creds_ready", lambda: True)
     monkeypatch.setattr(
         "adapters.incognia.fetch_signals",
         lambda **_kw: _unavailable_signals(),
@@ -160,6 +169,7 @@ def test_fail_closed_unavailable_required_redeem(tmp_path, monkeypatch):
 def test_fail_closed_unavailable_required_checkout(tmp_path, monkeypatch):
     app = create_app(db_path=tmp_path / "t.db")
     client = TestClient(app)
+    monkeypatch.setattr("loyalty_abuse_api.app.env_creds_ready", lambda: True)
     monkeypatch.setattr(
         "adapters.incognia.fetch_signals",
         lambda **_kw: _unavailable_signals(),
@@ -186,6 +196,7 @@ def test_fail_open_unavailable_not_required(tmp_path, monkeypatch):
     app = create_app(db_path=tmp_path / "t.db")
     client = TestClient(app)
     monkeypatch.delenv("INCOGNIA_REQUIRED_DEFAULT", raising=False)
+    monkeypatch.setattr("loyalty_abuse_api.app.env_creds_ready", lambda: True)
     monkeypatch.setattr(
         "adapters.incognia.fetch_signals",
         lambda **_kw: _unavailable_signals(),
@@ -212,6 +223,7 @@ def test_required_default_env_fail_closed(tmp_path, monkeypatch):
     app = create_app(db_path=tmp_path / "t.db")
     client = TestClient(app)
     monkeypatch.setenv("INCOGNIA_REQUIRED_DEFAULT", "true")
+    monkeypatch.setattr("loyalty_abuse_api.app.env_creds_ready", lambda: True)
     monkeypatch.setattr(
         "adapters.incognia.fetch_signals",
         lambda **_kw: _unavailable_signals(),
@@ -230,3 +242,95 @@ def test_required_default_env_fail_closed(tmp_path, monkeypatch):
     body = r.json()
     assert body["friction"] in {"hard_challenge", "block"}
     assert "intel.incognia_unavailable" in body["reasons"]
+
+
+def test_token_without_creds_not_silent_low_risk_fixture(tmp_path, monkeypatch):
+    """API must not call fetch_signals fixture path when creds missing (no explicit flag)."""
+    app = create_app(db_path=tmp_path / "t.db")
+    client = TestClient(app)
+    for key in _INCOGNIA_ENV:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.delenv("INCOGNIA_REQUIRED_DEFAULT", raising=False)
+    calls: list = []
+
+    def boom(**_kw):
+        calls.append(1)
+        raise AssertionError("fetch_signals must not run without creds or fixture flag")
+
+    monkeypatch.setattr("adapters.incognia.fetch_signals", boom)
+    monkeypatch.setattr("loyalty_abuse_api.app.fetch_signals", boom, raising=False)
+    monkeypatch.setattr("loyalty_abuse_api.app.env_creds_ready", lambda: False)
+
+    r = client.post(
+        "/v1/evaluate",
+        json={
+            "event": _redeem_event(
+                payload={"request_token": "tok", "incognia_required": False}
+            )
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert calls == []
+    di = body["features_snapshot"].get("device_intel") or {}
+    assert di.get("source") == "unavailable"
+    assert di.get("risk_assessment") != "low_risk"
+    assert "intel.incognia_unavailable" in body["reasons"]
+    assert body["features_snapshot"].get("device_intel_force_block") is not True
+    assert body["friction"] == "allow"
+
+
+def test_incognia_use_fixture_flag_allows_offline_fixture(tmp_path, monkeypatch):
+    app = create_app(db_path=tmp_path / "t.db")
+    client = TestClient(app)
+    for key in _INCOGNIA_ENV:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setattr("loyalty_abuse_api.app.env_creds_ready", lambda: False)
+
+    r = client.post(
+        "/v1/evaluate",
+        json={
+            "event": _redeem_event(
+                payload={
+                    "request_token": "tok",
+                    "incognia_use_fixture": True,
+                    "incognia_required": False,
+                }
+            )
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    di = body["features_snapshot"].get("device_intel") or {}
+    assert di.get("source") == "fixture"
+    assert di.get("risk_assessment") == "low_risk"
+
+
+def test_required_no_token_fail_closed_redeem(tmp_path, monkeypatch):
+    app = create_app(db_path=tmp_path / "t.db")
+    client = TestClient(app)
+    calls: list = []
+
+    def boom(**_kw):
+        calls.append(1)
+        raise AssertionError("fetch_signals must not be called without token")
+
+    monkeypatch.setattr("adapters.incognia.fetch_signals", boom)
+    monkeypatch.setattr("loyalty_abuse_api.app.fetch_signals", boom, raising=False)
+
+    r = client.post(
+        "/v1/evaluate",
+        json={
+            "event": _redeem_event(payload={"incognia_required": True}),
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert calls == []
+    assert body["friction"] in {"hard_challenge", "block"}
+    assert "intel.incognia_unavailable" in body["reasons"]
+    assert body["features_snapshot"].get("device_intel_force_block") is True
+    assert body["features_snapshot"].get("force_hard_floor") is True
+    rows = app.state.db.list_intel_calls()
+    assert len(rows) == 1
+    assert rows[0]["success"] is False
