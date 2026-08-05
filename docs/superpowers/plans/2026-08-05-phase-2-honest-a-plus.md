@@ -343,4 +343,4 @@ If ECE &gt; 0.05 after one fit: report actual ECE, try isotonic-on-bins (histogr
 - Economics before calibration may use raw score/100; Task 4 switches to `p_abuse`.
 - Graph typology weight changes may require one adversarial retune — keep anti-vanity.
 - Standalone A+ in-repo ≠ production A+ (4-week shadow) — README must say so.
-`)
+)
