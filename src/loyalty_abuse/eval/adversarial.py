@@ -1,12 +1,15 @@
-"""Adversarial eval suite — primary honest B+ proof for friction_v1_2.
+"""Adversarial eval suite — primary honest B+ proof for friction_v2_1.
 
 Honest B+ claim (what passing gates proves):
-1. Catch slices (device_rotation, slow_multi_acct, sequential_promo) are multi-signal
-   journeys under weighted_sum — no single typology reaches soft_challenge alone
-   (max weight ~0.28 → score ≤28; soft_challenge band starts at 45).
-2. Anti-vanity: catch forbids velocity hard_floor padding; caught journeys must
-   include expected typology reason families (multi_acct.*, promo.*, etc.).
-3. ato_known_device uses hybrid hard_floor via ato_chain — known-device confidence
+1. Pattern catch (slow_multi_acct, sequential_promo) reaches soft_challenge+ via
+   published interaction terms and/or soft floors — lone typology score may stay
+   below the soft band; floor-driven soft catch is valid and labeled floor.soft.*.
+2. Anti-vanity: catch forbids redeem_5m hard_floor padding; pattern slices keep
+   combined block_rate ≤ 0.5; caught journeys must cite typology, ix.*, or
+   floor.soft.* families (not velocity-floor vanity).
+3. household_fp allow_rate ≥ 0.85 with block_rate ≤ 0.5 on legit shared-device
+   families.
+4. ato_known_device uses hybrid hard_floor via ato_chain — known-device confidence
    contributes to score; friction elevation may be floor-driven.
 """
 from __future__ import annotations

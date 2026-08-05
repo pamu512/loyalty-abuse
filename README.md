@@ -79,13 +79,15 @@ Seeds six abuse patterns (multi-account, promo stack, referral self-deal, bot re
 
 ### Primary gate (B+ floor, still required)
 
-Adversarial suite on `friction_v2_0` (`policy_version` in artifact):
+Adversarial suite on `friction_v2_1` (`policy_version` in artifact):
 
 ```bash
-PYTHONPATH=src python3 scripts/adversarial_eval.py --seed 42 --out artifacts/adversarial_v2_0.json
+PYTHONPATH=src python3 scripts/adversarial_eval.py --seed 42 --out artifacts/adversarial_v2_1.json
 ```
 
-Exit code 0 only when all slice bounds pass (household FP allow-rate, device-rotation / slow-multi / sequential-promo / known-device ATO catch-rates). See `src/loyalty_abuse/eval/adversarial.py` for published bounds.
+Exit code 0 only when all slice bounds pass (household FP allow-rate ≥ 0.85 and block-rate ≤ 0.5; device-rotation / slow-multi / sequential-promo / known-device ATO catch-rates at soft_challenge+). See `src/loyalty_abuse/eval/adversarial.py` for published bounds.
+
+**Catch-power (`friction_v2_1`):** Score blend includes published interaction terms (`ix.*` in breakdown). Soft floors (`floor.soft.*`) may raise friction without raising score — a lone typology can sit below the soft band while friction reaches `soft_challenge+` via floor predicates. Adversarial gates require pattern slices to catch honestly (typology, interaction, or soft-floor attribution; no redeem-velocity hard_floor vanity; combined pattern block-rate ≤ 0.5).
 
 The synthetic 500k eval (`scripts/synth_eval.py`) is **regression-only** — it must not be cited as a grade claim.
 
@@ -102,7 +104,7 @@ Summaries: [`docs/superpowers/artifacts/`](docs/superpowers/artifacts/). Raw JSO
 
 **Honest standalone A claim:** Dollar-weighted threshold selection, graph ablation report, calibrated `p_abuse` with held-out ECE, and shadow logging are all wired and published. Graph ablation shows no incremental catch on this synthetic holdout — graph value remains unproven until denser tenant graphs or production labels.
 
-**Not production A+:** Live A+ additionally requires real later-confirmed outcome labels and **≥4 weeks** of shadow vs host action. The synthetic dry-run (`artifacts/shadow_dry_run.json`: precision 1.0, recall 0.4, insult_proxy 0.0) proves the reporter path only — do not claim live A+ from it.
+**Not production A+:** Live A+ additionally requires real later-confirmed outcome labels and **≥4 weeks** of shadow vs host action. The synthetic dry-run (`artifacts/shadow_dry_run.json`: precision 1.0, recall 0.4, insult_proxy 0.0) and any in-repo 28-day sim prove pipeline wiring only — do not claim production A+ from them.
 
 ### A++ path (Phase 3 — in-repo)
 
@@ -114,7 +116,7 @@ PYTHONPATH=src python3 scripts/drift_reeval.py --seed 42 --out artifacts/drift_r
 
 Exit 1 if any adversarial slice fails its bound.
 
-**Not production A++:** Live A++ needs live Incognia, real challenge labels, and weeks of ops — do not claim production A++ from synthetic fixtures or dry-runs alone.
+**Not production A++:** Live A++ needs live Incognia, real challenge labels, and weeks of ops — do not claim production A++ from synthetic fixtures, dry-runs, or a 28-day sim alone.
 
 After decisions are persisted:
 
