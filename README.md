@@ -52,7 +52,7 @@ Set `LOYALTY_ABUSE_DB` to override the SQLite path (default `loyalty_abuse.db`).
 | `POST /v1/evaluate` | Score by `event_id` or inline `event` (enforcing) |
 | `POST /v1/shadow/evaluate` | Shadow score; optional `host_friction`; logs recommended vs host |
 | `GET /v1/decisions/{id}` | Fetch audited decision |
-| `GET /v1/analytics/summary` | Friction mix, top reasons, typology rates |
+| `GET /v1/analytics/summary` | Friction mix, top reasons, typology rates, ops metrics |
 | `/` | Static analytics dashboard |
 
 ## Docker Compose
@@ -104,6 +104,18 @@ Summaries: [`docs/superpowers/artifacts/`](docs/superpowers/artifacts/). Raw JSO
 
 **Not production A+:** Live A+ additionally requires real later-confirmed outcome labels and **≥4 weeks** of shadow vs host action. The synthetic dry-run (`artifacts/shadow_dry_run.json`: precision 1.0, recall 0.4, insult_proxy 0.0) proves the reporter path only — do not claim live A+ from it.
 
+### A++ path (Phase 3 — in-repo)
+
+The A++ *path* is shipped: Incognia adapter (fixture + live-gated), challenge outcome ingest, consortium no-op stub, continual drift re-eval, and ops metrics on `GET /v1/analytics/summary`.
+
+```bash
+PYTHONPATH=src python3 scripts/drift_reeval.py --seed 42 --out artifacts/drift_reeval.json
+```
+
+Exit 1 if any adversarial slice fails its bound.
+
+**Not production A++:** Live A++ needs live Incognia, real challenge labels, and weeks of ops — do not claim production A++ from synthetic fixtures or dry-runs alone.
+
 After decisions are persisted:
 
 ```bash
@@ -120,4 +132,6 @@ pytest -v
 
 ## Host adapters
 
-Optional Tarka integration notes (no code in v1): [`adapters/tarka/README.md`](adapters/tarka/README.md).
+- Incognia: [`adapters/incognia/README.md`](adapters/incognia/README.md)
+- Consortium: no-op `lookup_badness(hashes) -> {}` in [`adapters/consortium/`](adapters/consortium/)
+- Tarka notes (no code in v1): [`adapters/tarka/README.md`](adapters/tarka/README.md)

@@ -15,7 +15,7 @@ from loyalty_abuse import evaluate
 from loyalty_abuse.device_intel import apply_to_payload
 from loyalty_abuse.features import FeatureStore
 from loyalty_abuse.schema import Decision, EventEnvelope, EventType
-from loyalty_abuse_api.analytics import build_summary
+from loyalty_abuse_api.analytics import build_ops_metrics, build_summary
 from loyalty_abuse_api.db import Database
 
 _FAIL_CLOSED_TYPES = frozenset({EventType.redeem, EventType.checkout})
@@ -205,8 +205,27 @@ def create_app(db_path: str | Path = "loyalty_abuse.db") -> FastAPI:
 
     @app.get("/v1/analytics/summary")
     def get_analytics_summary() -> dict[str, Any]:
-        rows = [d.model_dump(mode="json") for d in app.state.db.list_decisions()]
-        return build_summary(rows)
+        db = app.state.db
+        rows = [d.model_dump(mode="json") for d in db.list_decisions()]
+        events_by_id: dict[str, EventEnvelope] = {}
+        for d in rows:
+            eid = str(d.get("event_id") or "")
+            if not eid or eid in events_by_id:
+                continue
+            event = db.get_event(eid)
+            if event is not None:
+                events_by_id[eid] = event
+        summary = build_summary(rows)
+        summary.update(
+            build_ops_metrics(
+                decisions=rows,
+                shadow_logs=db.list_shadow_logs(),
+                intel_calls=db.list_intel_calls(),
+                challenge_outcomes=db.list_challenge_outcomes(),
+                events_by_id=events_by_id,
+            )
+        )
+        return summary
 
     static_dir = Path(__file__).resolve().parent.parent.parent / "static"
     if static_dir.is_dir():
