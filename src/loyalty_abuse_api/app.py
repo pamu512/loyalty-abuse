@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -89,6 +89,13 @@ class ShadowEvaluateRequest(BaseModel):
     event_id: str | None = None
     event: EventEnvelope | None = None
     host_friction: str | None = None
+
+
+class ChallengeOutcomeRequest(BaseModel):
+    decision_id: str
+    event_id: str | None = None
+    outcome: Literal["passed", "failed", "abandoned"]
+    ts: str
 
 
 def _store_for_event(db: Database, event: EventEnvelope) -> FeatureStore:
@@ -182,6 +189,19 @@ def create_app(db_path: str | Path = "loyalty_abuse.db") -> FastAPI:
         if decision is None:
             raise HTTPException(status_code=404, detail="decision not found")
         return decision.model_dump(mode="json")
+
+    @app.post("/v1/challenge_outcomes")
+    def post_challenge_outcomes(body: ChallengeOutcomeRequest) -> dict[str, Any]:
+        # Labels only — never rewrite decisions rows.
+        try:
+            return app.state.db.save_challenge_outcome(
+                decision_id=body.decision_id,
+                event_id=body.event_id,
+                outcome=body.outcome,
+                ts=body.ts,
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="challenge outcome persist failed") from exc
 
     @app.get("/v1/analytics/summary")
     def get_analytics_summary() -> dict[str, Any]:

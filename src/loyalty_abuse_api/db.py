@@ -46,6 +46,14 @@ class Database:
                 source TEXT,
                 created_at TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS challenge_outcomes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                decision_id TEXT NOT NULL,
+                event_id TEXT,
+                outcome TEXT NOT NULL,
+                ts TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
             """
         )
         self._conn.commit()
@@ -215,6 +223,65 @@ class Database:
                 "success": bool(row["success"]),
                 "latency_ms": int(row["latency_ms"]),
                 "source": row["source"],
+                "created_at": row["created_at"],
+            }
+            for row in rows
+        ]
+
+    def save_challenge_outcome(
+        self,
+        *,
+        decision_id: str,
+        outcome: str,
+        ts: str,
+        event_id: str | None = None,
+    ) -> dict:
+        created_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        cur = self._conn.execute(
+            """
+            INSERT INTO challenge_outcomes (
+                decision_id, event_id, outcome, ts, created_at
+            )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (decision_id, event_id, outcome, ts, created_at),
+        )
+        self._conn.commit()
+        return {
+            "id": int(cur.lastrowid),
+            "decision_id": decision_id,
+            "event_id": event_id,
+            "outcome": outcome,
+            "ts": ts,
+            "created_at": created_at,
+        }
+
+    def list_challenge_outcomes(self, *, decision_id: str | None = None) -> list[dict]:
+        if decision_id is not None:
+            rows = self._conn.execute(
+                """
+                SELECT id, decision_id, event_id, outcome, ts, created_at
+                FROM challenge_outcomes
+                WHERE decision_id = ?
+                ORDER BY id ASC
+                """,
+                (decision_id,),
+            ).fetchall()
+        else:
+            rows = self._conn.execute(
+                """
+                SELECT id, decision_id, event_id, outcome, ts, created_at
+                FROM challenge_outcomes
+                ORDER BY id ASC
+                """
+            ).fetchall()
+        return [
+            {
+                "id": int(row["id"]),
+                "decision_id": row["decision_id"],
+                "event_id": row["event_id"],
+                "outcome": row["outcome"],
+                "ts": row["ts"],
                 "created_at": row["created_at"],
             }
             for row in rows
