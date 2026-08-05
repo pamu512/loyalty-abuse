@@ -1,0 +1,18 @@
+{
+  "id": "fix-login-low",
+  "risk_assessment": "low_risk",
+  "evidence": {
+    "device_integrity": {
+      "emulator": false,
+      "gps_spoofing": false,
+      "probable_root": false,
+      "from_official_store": true
+    },
+    "location_services": {
+      "location_permission_enabled": true,
+      "location_sensors_enabled": true
+    },
+    "device_fraud_reputation": "allowed",
+    "known_account": true
+  }
+}
