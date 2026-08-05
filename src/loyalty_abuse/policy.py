@@ -7,6 +7,7 @@ from loyalty_abuse.schema import FrictionAction, POLICY_VERSION
 
 @dataclass(frozen=True)
 class FrictionPolicy:
+    # ponytail: defaults are legacy fallbacks; evaluate() loads friction_v2_0 bands {24,28,48,68}.
     allow_max: int = 24
     throttle_max: int = 44
     soft_max: int = 64

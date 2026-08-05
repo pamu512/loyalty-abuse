@@ -4,9 +4,11 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
+from loyalty_abuse.features import FeatureStore
 from loyalty_abuse_api.app import create_app
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -80,6 +82,21 @@ def test_live_evaluate_does_not_write_shadow_logs(tmp_path):
     assert r.status_code == 200
     assert len(app.state.db.list_decisions()) == 1
     assert app.state.db.list_shadow_logs() == []
+
+
+def test_shadow_dry_run_observes_each_event_once():
+    """Scored events are observed inside evaluate(); priors only otherwise."""
+    observe_counts: dict[str, int] = {}
+    orig = FeatureStore.observe
+
+    def counting_observe(self, event):
+        observe_counts[event.event_id] = observe_counts.get(event.event_id, 0) + 1
+        return orig(self, event)
+
+    with patch.object(FeatureStore, "observe", counting_observe):
+        run_dry_run(n=20, seed=42, days=3)
+    assert observe_counts
+    assert all(c == 1 for c in observe_counts.values())
 
 
 def test_shadow_dry_run_emits_metrics_json(tmp_path):

@@ -73,7 +73,7 @@ def run_dry_run(
     for _ts, day_i, label, ev, is_scored in timeline:
         store = stores[ev.tenant_id]
         if is_scored:
-            decision = evaluate(ev, store)
+            decision = evaluate(ev, store)  # evaluate() observes the scored event
             shadow_rows.append(
                 {
                     "event_id": ev.event_id,
@@ -86,7 +86,8 @@ def run_dry_run(
                 }
             )
             by_day_counts[str(day_i)] += 1
-        store.observe(ev)
+        else:
+            store.observe(ev)
 
     # Phase 2 — later confirm labels from generator truth; compute proxies.
     confirmed = []
