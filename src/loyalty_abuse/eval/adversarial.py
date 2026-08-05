@@ -464,6 +464,28 @@ def run_suite(seed: int = 42, n_per_slice: int = N_PER_SLICE) -> dict[str, Any]:
             "pass": passed,
         }
 
+    # Anti-vanity block-rate caps (also enforced by pytest; must drive CLI gates_pass).
+    pattern_names = ("slow_multi_acct", "sequential_promo")
+    pattern_blocks = sum(slices[n]["friction"].get("block", 0) for n in pattern_names)
+    pattern_n = sum(slices[n]["n"] for n in pattern_names)
+    pattern_block_rate = pattern_blocks / pattern_n
+    gates["pattern_block_rate"] = {
+        "metric": "block_rate",
+        "bound": 0.5,
+        "actual": round(pattern_block_rate, 4),
+        "pass": pattern_block_rate <= 0.5,
+    }
+
+    hh_block = slices["household_fp"]["friction"].get("block", 0)
+    hh_n = slices["household_fp"]["n"]
+    hh_block_rate = hh_block / hh_n
+    gates["household_block_rate"] = {
+        "metric": "block_rate",
+        "bound": 0.5,
+        "actual": round(hh_block_rate, 4),
+        "pass": hh_block_rate <= 0.5,
+    }
+
     return {
         "seed": seed,
         "n_per_slice": n_per_slice,

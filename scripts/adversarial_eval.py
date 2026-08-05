@@ -16,7 +16,7 @@ from loyalty_abuse.eval.adversarial import run_suite  # noqa: E402
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--out", type=Path, default=Path("artifacts/adversarial_v1_2.json"))
+    p.add_argument("--out", type=Path, default=Path("artifacts/adversarial_v2_1.json"))
     args = p.parse_args()
     report = run_suite(seed=args.seed)
     args.out.parent.mkdir(parents=True, exist_ok=True)

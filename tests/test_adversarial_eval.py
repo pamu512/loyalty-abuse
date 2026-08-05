@@ -41,17 +41,17 @@ def test_pattern_slices_require_soft_challenge_plus():
 def test_pattern_slices_block_rate_anti_vanity():
     """Pattern slices combined: block_rate ≤ 0.5 (no block-all vanity)."""
     report = run_suite(seed=42)
-    blocks = sum(report["slices"][name]["friction"].get("block", 0) for name in PATTERN_SLICES)
-    total = sum(report["slices"][name]["n"] for name in PATTERN_SLICES)
-    assert blocks / total <= 0.5
+    gate = report["gates"]["pattern_block_rate"]
+    assert gate["pass"] is True
+    assert gate["actual"] <= 0.5
 
 
 def test_household_allow_and_block_anti_vanity():
     report = run_suite(seed=42)
-    hh = report["slices"]["household_fp"]
     assert report["gates"]["household_fp"]["actual"] >= 0.85
-    block_rate = hh["friction"].get("block", 0) / hh["n"]
-    assert block_rate <= 0.5
+    gate = report["gates"]["household_block_rate"]
+    assert gate["pass"] is True
+    assert gate["actual"] <= 0.5
 
 
 def test_catch_slices_not_velocity_hard_floor_vanity():
