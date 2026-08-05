@@ -7,6 +7,11 @@ from typing import Iterable
 
 from loyalty_abuse.schema import EventEnvelope, EventType
 
+# Weak attrs (email_domain, promo_code) only link when rare enough.
+# Strong attrs (device, phone, pay) always link.
+RARE_MAX = 5
+_WEAK_ATTRS = frozenset({"email_domain", "promo_code"})
+
 
 def _parse_ts(ts: str) -> datetime:
     return datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(timezone.utc)
@@ -78,11 +83,16 @@ def cluster_features(
             "graph_shared_attr_rarity": 0.0,
         }
 
-    # account–account adjacency via shared attrs (attrs with ≥2 accounts)
+    # account–account adjacency via shared attrs (attrs with ≥2 accounts).
+    # Weak attrs only link when accounts_sharing_attr <= RARE_MAX (1/n rarity gate).
     adj: dict[str, set[str]] = defaultdict(set)
     linking_attrs: list[tuple[str, str]] = []
     for key, accts in attr_accounts.items():
-        if len(accts) < 2:
+        n = len(accts)
+        if n < 2:
+            continue
+        kind = key[0]
+        if kind in _WEAK_ATTRS and n > RARE_MAX:
             continue
         linking_attrs.append(key)
         alist = list(accts)

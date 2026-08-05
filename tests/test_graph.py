@@ -48,6 +48,33 @@ def test_shared_device_cluster_size_and_phone_multi_hop():
     assert feats["graph_multi_hop_accounts"] >= 3
 
 
+def test_common_email_domain_does_not_inflate_cluster():
+    """Many @gmail.com accounts do not form one cluster via domain alone; rare device still links."""
+    now = datetime(2026, 8, 5, 12, 0, tzinfo=timezone.utc)
+    # 8 accounts share @gmail.com only (distinct devices/phones) → no domain edges (n > RARE_MAX)
+    gmail_events = [
+        _e(
+            f"g{i}",
+            f"g{i}",
+            device=f"devG{i}",
+            phone=f"555-100{i}",
+            email=f"user{i}@gmail.com",
+            ts="2026-08-05T10:00:00Z",
+        )
+        for i in range(8)
+    ]
+    feats = cluster_features(gmail_events, "g0", now)
+    assert feats["graph_cluster_size"] == 1.0
+
+    # Two accounts share a rare device → still cluster
+    rare = [
+        _e("d1", "r1", device="rareDev", email="a@other.com", ts="2026-08-05T10:00:00Z"),
+        _e("d2", "r2", device="rareDev", email="b@else.com", ts="2026-08-05T10:30:00Z"),
+    ]
+    feats_dev = cluster_features(rare, "r1", now)
+    assert feats_dev["graph_cluster_size"] >= 2
+
+
 def test_snapshot_exposes_graph_keys():
     store = FeatureStore()
     store.observe(_e("1", "a1", device="devA", ts="2026-08-05T10:00:00Z"))
