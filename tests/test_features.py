@@ -1,6 +1,81 @@
+from datetime import datetime, timedelta, timezone
+
 from loyalty_abuse.calibration import load_calibration
 from loyalty_abuse.features import FeatureStore
 from loyalty_abuse.schema import EventEnvelope, EventType
+
+
+def _ev(eid, acct, device, hours_ago, now, *, ip="1.1.1.1", email=None, payload=None, etype=EventType.signup):
+    ts = (now - timedelta(hours=hours_ago)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return EventEnvelope(
+        event_id=eid,
+        tenant_id="t",
+        ts=ts,
+        type=etype,
+        account_id=acct,
+        session_id=eid,
+        device_id=device,
+        ip=ip,
+        email=email,
+        payload=payload or {},
+    )
+
+
+def test_device_accounts_multi_window():
+    # set-cardinality of account_id after observe includes current event
+    now = datetime(2026, 8, 5, 12, 0, tzinfo=timezone.utc)
+    store = FeatureStore()
+    store.observe(_ev("a", "a1", "d", 0.5, now))  # 30m → 1h+24h+7d
+    store.observe(_ev("b", "a2", "d", 3, now))  # 3h → 24h+7d only
+    store.observe(_ev("c", "a3", "d", 48, now))  # 2d → 7d only
+    cur = EventEnvelope(
+        event_id="r",
+        tenant_id="t",
+        ts=now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        type=EventType.redeem,
+        account_id="a1",
+        session_id="s",
+        device_id="d",
+        ip="1.1.1.1",
+        payload={"reward_id": "r", "points": 1, "offer_ids": [], "channel": "app"},
+    )
+    store.observe(cur)
+    snap = store.snapshot(cur)
+    assert snap["accounts_on_device_1h"] == 1  # {a1}
+    assert snap["accounts_on_device_24h"] == 2  # {a1,a2}
+    assert snap["accounts_on_device_7d"] == 3  # {a1,a2,a3}
+
+
+def test_ip_code_email_multi_window():
+    now = datetime(2026, 8, 5, 12, 0, tzinfo=timezone.utc)
+    store = FeatureStore()
+    store.observe(_ev("a", "a1", "d1", 0.5, now, email="same+1@ex.com", payload={"promo_codes": ["SAVE"]}))
+    store.observe(_ev("b", "a2", "d2", 3, now, email="same+2@ex.com", payload={"promo_codes": ["SAVE"]}))
+    store.observe(_ev("c", "a3", "d3", 48, now, email="same+3@ex.com", payload={"promo_codes": ["SAVE"]}))
+    cur = EventEnvelope(
+        event_id="r",
+        tenant_id="t",
+        ts=now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        type=EventType.redeem,
+        account_id="a1",
+        session_id="s",
+        device_id="d9",
+        ip="1.1.1.1",
+        email="same+9@ex.com",
+        payload={"reward_id": "r", "points": 1, "offer_ids": [], "promo_codes": ["SAVE"], "channel": "app"},
+    )
+    store.observe(cur)
+    snap = store.snapshot(cur)
+    assert snap["accounts_on_ip_1h"] == 1
+    assert snap["accounts_on_ip_24h"] == 2
+    assert snap["accounts_on_ip_7d"] == 3
+    assert snap["code_unique_users_1h"] == 1
+    assert snap["code_unique_users_24h"] == 2
+    assert snap["code_unique_users_7d"] == 3
+    assert snap["email_alias_burst_1h"] is False  # only a1 in 1h
+    assert snap["email_alias_burst_24h"] is False  # a1,a2 → 2 < 3
+    assert snap["email_alias_burst_7d"] is True  # a1,a2,a3 → 3
+    assert snap["email_alias_burst"] == snap["email_alias_burst_24h"]
 
 
 def _e(**kwargs):

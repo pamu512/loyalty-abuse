@@ -53,22 +53,30 @@ class FeatureStore:
 
     def snapshot(self, event: EventEnvelope) -> dict[str, Any]:
         now = _parse_ts(event.ts)
-        d24 = timedelta(hours=24)
         d5m = timedelta(minutes=5)
-        on_device = self._in_window(
-            now, d24, lambda e: e.device_id == event.device_id and e.tenant_id == event.tenant_id
-        )
-        on_ip = self._in_window(
-            now, d24, lambda e: e.ip == event.ip and e.tenant_id == event.tenant_id
-        )
-        accounts_device = {e.account_id for e in on_device}
-        accounts_ip = {e.account_id for e in on_ip}
+        windows = {
+            "1h": timedelta(hours=1),
+            "24h": timedelta(hours=24),
+            "7d": timedelta(days=7),
+        }
 
-        roots: dict[str, set[str]] = defaultdict(set)
-        for e in self._in_window(now, d24, lambda e: e.tenant_id == event.tenant_id):
-            root = _email_root(e.email)
-            if root:
-                roots[root].add(e.account_id)
+        accounts_device: dict[str, int] = {}
+        accounts_ip: dict[str, int] = {}
+        code_users_n: dict[str, int] = {}
+        email_burst: dict[str, bool] = {}
+
+        offers = list(event.payload.get("offer_ids") or [])
+        promos = list(event.payload.get("promo_codes") or [])
+        loyalty = list(event.payload.get("loyalty_applied") or [])
+        stack_depth = len(offers) + len(promos) + len(loyalty)
+        discount_depth = float(event.payload.get("discount_pct") or 0)
+
+        code = None
+        if promos:
+            code = str(promos[0])
+        elif event.payload.get("referral_code"):
+            code = str(event.payload["referral_code"])
+
         current_root = _email_root(event.email)
         if current_root is None:
             # fall back to any email root seen for this account
@@ -77,9 +85,37 @@ class FeatureStore:
                     current_root = _email_root(e.email)
                     if current_root:
                         break
-        email_alias_burst = bool(
-            current_root and len(roots.get(current_root, set())) >= 3
-        )
+
+        for label, window in windows.items():
+            on_device = self._in_window(
+                now,
+                window,
+                lambda e: e.device_id == event.device_id and e.tenant_id == event.tenant_id,
+            )
+            on_ip = self._in_window(
+                now,
+                window,
+                lambda e: e.ip == event.ip and e.tenant_id == event.tenant_id,
+            )
+            accounts_device[label] = len({e.account_id for e in on_device})
+            accounts_ip[label] = len({e.account_id for e in on_ip})
+
+            roots: dict[str, set[str]] = defaultdict(set)
+            for e in self._in_window(now, window, lambda e: e.tenant_id == event.tenant_id):
+                root = _email_root(e.email)
+                if root:
+                    roots[root].add(e.account_id)
+            email_burst[label] = bool(
+                current_root and len(roots.get(current_root, set())) >= 3
+            )
+
+            code_users: set[str] = set()
+            if code:
+                for e in self._in_window(now, window, lambda e: e.tenant_id == event.tenant_id):
+                    plist = list(e.payload.get("promo_codes") or [])
+                    if code in plist or e.payload.get("referral_code") == code:
+                        code_users.add(e.account_id)
+            code_users_n[label] = len(code_users)
 
         referral_shared_device = False
         referral_shared_payment = False
@@ -98,12 +134,6 @@ class FeatureStore:
                 referral_shared_device = bool(devices.get(ref, set()) & devices.get(ree, set()))
                 referral_shared_payment = bool(pays.get(ref, set()) & pays.get(ree, set()))
 
-        offers = list(event.payload.get("offer_ids") or [])
-        promos = list(event.payload.get("promo_codes") or [])
-        loyalty = list(event.payload.get("loyalty_applied") or [])
-        stack_depth = len(offers) + len(promos) + len(loyalty)
-        discount_depth = float(event.payload.get("discount_pct") or 0)
-
         redeem_5m = self._in_window(
             now,
             d5m,
@@ -118,18 +148,6 @@ class FeatureStore:
             and e.tenant_id == event.tenant_id
             and e.type == EventType.signup,
         )
-
-        code = None
-        if promos:
-            code = str(promos[0])
-        elif event.payload.get("referral_code"):
-            code = str(event.payload["referral_code"])
-        code_users: set[str] = set()
-        if code:
-            for e in self._in_window(now, d24, lambda e: e.tenant_id == event.tenant_id):
-                plist = list(e.payload.get("promo_codes") or [])
-                if code in plist or e.payload.get("referral_code") == code:
-                    code_users.add(e.account_id)
 
         acct_events = [
             e
@@ -191,16 +209,25 @@ class FeatureStore:
             or len(signup_5m) >= signup_floor
         )
         return {
-            "accounts_on_device_24h": len(accounts_device),
-            "accounts_on_ip_24h": len(accounts_ip),
-            "email_alias_burst": email_alias_burst,
+            "accounts_on_device_1h": accounts_device["1h"],
+            "accounts_on_device_24h": accounts_device["24h"],
+            "accounts_on_device_7d": accounts_device["7d"],
+            "accounts_on_ip_1h": accounts_ip["1h"],
+            "accounts_on_ip_24h": accounts_ip["24h"],
+            "accounts_on_ip_7d": accounts_ip["7d"],
+            "email_alias_burst_1h": email_burst["1h"],
+            "email_alias_burst_24h": email_burst["24h"],
+            "email_alias_burst_7d": email_burst["7d"],
+            "email_alias_burst": email_burst["24h"],
             "referral_shared_device": referral_shared_device,
             "referral_shared_payment": referral_shared_payment,
             "stack_depth": stack_depth,
             "discount_depth": discount_depth,
             "redeem_count_5m": len(redeem_5m),
             "signup_count_5m": len(signup_5m),
-            "code_unique_users_24h": len(code_users),
+            "code_unique_users_1h": code_users_n["1h"],
+            "code_unique_users_24h": code_users_n["24h"],
+            "code_unique_users_7d": code_users_n["7d"],
             "account_age_minutes": account_age_minutes,
             "minutes_signup_to_event": minutes_signup_to_event,
             "ato_chain": ato_chain,
