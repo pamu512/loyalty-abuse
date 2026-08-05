@@ -178,6 +178,7 @@ def test_ato_chain_false_when_redeem_after_30m():
 
 
 def test_ato_requires_new_device_not_bare_geo():
+    """Bare geo string is not new_geo; non-sensitive profile update is not known-device ATO."""
     store = FeatureStore()
     store.observe(_e(event_id="1", type=EventType.signup, ts="2026-08-04T10:00:00Z", account_id="a1", device_id="old"))
     store.observe(
@@ -197,7 +198,7 @@ def test_ato_requires_new_device_not_bare_geo():
             ts="2026-08-04T12:01:00Z",
             account_id="a1",
             device_id="new",
-            payload={"fields_changed": ["email"]},
+            payload={"fields_changed": ["display_name"]},
         )
     )
     snap = store.snapshot(
@@ -211,6 +212,91 @@ def test_ato_requires_new_device_not_bare_geo():
         )
     )
     assert snap["ato_chain"] is False
+
+
+def test_ato_known_device_sensitive_profile():
+    store = FeatureStore()
+    store.observe(_e(event_id="1", type=EventType.signup, ts="2026-08-04T10:00:00Z", account_id="a1", device_id="same"))
+    store.observe(
+        _e(
+            event_id="2",
+            type=EventType.login,
+            ts="2026-08-04T12:00:00Z",
+            account_id="a1",
+            device_id="same",
+            payload={"success": True},
+        )
+    )
+    store.observe(
+        _e(
+            event_id="3",
+            type=EventType.profile_update,
+            ts="2026-08-04T12:01:00Z",
+            account_id="a1",
+            device_id="same",
+            payload={"fields_changed": ["email"]},
+        )
+    )
+    snap = store.snapshot(
+        _e(
+            event_id="4",
+            type=EventType.redeem,
+            ts="2026-08-04T12:02:00Z",
+            account_id="a1",
+            device_id="same",
+            payload={"reward_id": "r", "points": 50, "offer_ids": [], "channel": "app"},
+        )
+    )
+    assert snap["ato_chain"] is True
+    assert snap["ato_known_device"] is True
+    assert snap["force_hard_floor"] is True
+
+
+def test_sequential_stack_depth_across_events():
+    now = datetime(2026, 8, 5, 12, 0, tzinfo=timezone.utc)
+    store = FeatureStore()
+    store.observe(
+        _ev("s", "a1", "d", 48, now, etype=EventType.signup, email="u@ex.com")
+    )
+    store.observe(
+        _ev(
+            "e1",
+            "a1",
+            "d",
+            3,
+            now,
+            etype=EventType.offer_enroll,
+            email="u@ex.com",
+            payload={"offer_id": "o1"},
+        )
+    )
+    store.observe(
+        _ev(
+            "e2",
+            "a1",
+            "d",
+            2,
+            now,
+            etype=EventType.offer_enroll,
+            email="u@ex.com",
+            payload={"offer_id": "o2"},
+        )
+    )
+    cur = EventEnvelope(
+        event_id="r",
+        tenant_id="t",
+        ts=now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        type=EventType.redeem,
+        account_id="a1",
+        session_id="s",
+        device_id="d",
+        ip="1.1.1.1",
+        email="u@ex.com",
+        payload={"reward_id": "r", "points": 1, "promo_codes": ["P"], "offer_ids": [], "channel": "app"},
+    )
+    store.observe(cur)
+    snap = store.snapshot(cur)
+    assert snap["stack_depth"] >= 3
 
 
 def test_email_alias_burst_scoped_to_current_root():

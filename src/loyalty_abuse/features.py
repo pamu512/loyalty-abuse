@@ -33,6 +33,27 @@ def _email_root(email: str | None) -> str | None:
     return f"{local}@{domain}"
 
 
+_SENSITIVE_PROFILE_FIELDS = frozenset(
+    {"email", "phone", "payment", "payment_instrument", "password"}
+)
+
+
+def _sensitive_profile_update(payload: dict[str, Any]) -> bool:
+    fields = payload.get("fields_changed") or []
+    return any(str(f).lower() in _SENSITIVE_PROFILE_FIELDS for f in fields)
+
+
+def _stack_tokens(payload: dict[str, Any]) -> set[str]:
+    tokens: set[str] = set()
+    for key in ("offer_ids", "promo_codes", "loyalty_applied"):
+        for x in payload.get(key) or []:
+            tokens.add(f"{key}:{x}")
+    oid = payload.get("offer_id")
+    if oid is not None and str(oid) != "":
+        tokens.add(f"offer_ids:{oid}")
+    return tokens
+
+
 class FeatureStore:
     def __init__(self) -> None:
         self._events: list[EventEnvelope] = []
@@ -65,12 +86,9 @@ class FeatureStore:
         code_users_n: dict[str, int] = {}
         email_burst: dict[str, bool] = {}
 
-        offers = list(event.payload.get("offer_ids") or [])
-        promos = list(event.payload.get("promo_codes") or [])
-        loyalty = list(event.payload.get("loyalty_applied") or [])
-        stack_depth = len(offers) + len(promos) + len(loyalty)
         discount_depth = float(event.payload.get("discount_pct") or 0)
 
+        promos = list(event.payload.get("promo_codes") or [])
         code = None
         if promos:
             code = str(promos[0])
@@ -162,14 +180,25 @@ class FeatureStore:
         account_age_minutes = (now - signup_ts).total_seconds() / 60.0 if signup_ts else 0.0
         minutes_signup_to_event = account_age_minutes
 
+        # ponytail: union stack tokens over 7d so sequential enroll/redeem builds depth
+        stack_tokens: set[str] = set()
+        stack_start = now - timedelta(days=7)
+        for e in acct_events_sorted:
+            et = _parse_ts(e.ts)
+            if et < stack_start or et > now:
+                continue
+            stack_tokens |= _stack_tokens(e.payload)
+        stack_tokens |= _stack_tokens(event.payload)
+        stack_depth = len(stack_tokens)
+
         ato_chain = False
+        ato_known_device = False
         minutes_login_to_redeem = None
         recent = [e for e in acct_events_sorted if _parse_ts(e.ts) <= now]
         for i, e in enumerate(recent):
             if e.type != EventType.login:
                 continue
-            if not (e.payload.get("new_device") is True or e.payload.get("new_geo") is True):
-                continue
+            is_new = e.payload.get("new_device") is True or e.payload.get("new_geo") is True
             login_t = _parse_ts(e.ts)
             prof = next(
                 (
@@ -181,6 +210,9 @@ class FeatureStore:
                 None,
             )
             if not prof:
+                continue
+            # classic ATO: new_device|new_geo; known-device: sensitive profile fields only
+            if not is_new and not _sensitive_profile_update(prof.payload):
                 continue
             red = next(
                 (
@@ -199,6 +231,7 @@ class FeatureStore:
             )
             if red or current_redeem_in_chain:
                 ato_chain = True
+                ato_known_device = not is_new
                 minutes_login_to_redeem = (now - login_t).total_seconds() / 60.0
                 break
 
@@ -231,6 +264,7 @@ class FeatureStore:
             "account_age_minutes": account_age_minutes,
             "minutes_signup_to_event": minutes_signup_to_event,
             "ato_chain": ato_chain,
+            "ato_known_device": ato_known_device,
             "minutes_login_to_redeem": minutes_login_to_redeem,
             "force_hard_floor": force_hard,
         }

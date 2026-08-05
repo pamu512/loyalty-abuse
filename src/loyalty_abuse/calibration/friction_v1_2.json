@@ -18,7 +18,7 @@
   "sat": {
     "accounts_on_device_1h": { "a": 2, "b": 4 },
     "accounts_on_device_24h": { "a": 2, "b": 5 },
-    "accounts_on_device_7d": { "a": 3, "b": 8 },
+    "accounts_on_device_7d": { "a": 2, "b": 5 },
     "accounts_on_ip_1h": { "a": 3, "b": 8 },
     "accounts_on_ip_24h": { "a": 3, "b": 10 },
     "accounts_on_ip_7d": { "a": 5, "b": 20 },
@@ -35,6 +35,7 @@
   "young_bot_mult": 1.15,
   "young_multi_mult": 1.1,
   "ato_confidence": 0.85,
+  "ato_known_device_confidence": 0.55,
   "email_burst_confidence": 0.75,
   "referral_shared_device_c": 0.9,
   "referral_shared_payment_c": 0.85,

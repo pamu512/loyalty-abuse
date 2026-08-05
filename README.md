@@ -74,6 +74,16 @@ Seeds six abuse patterns (multi-account, promo stack, referral self-deal, bot re
 
 ## Offline evaluation
 
+**Honest B+ proof** is the adversarial suite (not the large synth run):
+
+```bash
+python scripts/adversarial_eval.py --seed 42 --out artifacts/adversarial_v1_2.json
+```
+
+Exit code 0 only when all slice bounds pass (household FP allow-rate, device-rotation / slow-multi / sequential-promo / known-device ATO catch-rates). See `src/loyalty_abuse/eval/adversarial.py` for published bounds.
+
+The synthetic 500k eval (`scripts/synth_eval.py`) is **regression-only** — it must not be cited as the B+ grade claim.
+
 After decisions are persisted:
 
 ```bash
