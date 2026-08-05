@@ -1,0 +1,9 @@
+[
+  {"score": 20, "liability_usd": 5.0, "label_abuse": false},
+  {"score": 22, "liability_usd": 5.0, "label_abuse": false},
+  {"score": 30, "liability_usd": 1000.0, "label_abuse": true},
+  {"score": 40, "liability_usd": 1000.0, "label_abuse": true},
+  {"score": 50, "liability_usd": 1000.0, "label_abuse": true},
+  {"score": 55, "liability_usd": 1000.0, "label_abuse": true},
+  {"score": 70, "liability_usd": 1000.0, "label_abuse": true}
+]

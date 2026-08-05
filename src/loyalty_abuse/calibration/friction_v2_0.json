@@ -11,9 +11,9 @@
   },
   "bands": {
     "allow_max": 24,
-    "throttle_max": 44,
-    "soft_max": 64,
-    "hard_max": 84
+    "throttle_max": 28,
+    "soft_max": 48,
+    "hard_max": 68
   },
   "sat": {
     "accounts_on_device_1h": { "a": 2, "b": 4 },
