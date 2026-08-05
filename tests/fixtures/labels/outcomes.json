@@ -1,0 +1,34 @@
+[
+  {
+    "decision_id": "dec_fail",
+    "event_id": "evt_fail",
+    "outcome": "failed",
+    "ts": "2026-08-01T10:30:00Z"
+  },
+  {
+    "decision_id": "dec_pass",
+    "event_id": "evt_pass",
+    "outcome": "passed",
+    "ts": "2026-08-01T11:15:00Z"
+  },
+  {
+    "decision_id": "dec_abandon",
+    "outcome": "abandoned",
+    "ts": "2026-08-01T12:45:00Z"
+  },
+  {
+    "decision_id": "dec_claw",
+    "outcome": "failed",
+    "ts": "2026-08-02T09:30:00Z"
+  },
+  {
+    "decision_id": "dec_unknown",
+    "outcome": "failed",
+    "ts": "2026-08-04T00:00:00Z"
+  },
+  {
+    "decision_id": "dec_priority",
+    "outcome": "failed",
+    "ts": "2026-08-03T08:30:00Z"
+  }
+]

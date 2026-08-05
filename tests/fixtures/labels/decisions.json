@@ -1,0 +1,52 @@
+[
+  {
+    "decision_id": "dec_fail",
+    "event_id": "evt_fail",
+    "score": 72,
+    "p_abuse": 0.81,
+    "friction": "soft_challenge",
+    "ts": "2026-08-01T10:00:00Z"
+  },
+  {
+    "decision_id": "dec_pass",
+    "event_id": "evt_pass",
+    "score": 45,
+    "p_abuse": 0.35,
+    "friction": "soft_challenge",
+    "ts": "2026-08-01T11:00:00Z"
+  },
+  {
+    "decision_id": "dec_abandon",
+    "event_id": "evt_abandon",
+    "score": 68,
+    "p_abuse": 0.77,
+    "friction": "soft_challenge",
+    "ts": "2026-08-01T12:00:00Z"
+  },
+  {
+    "decision_id": "dec_claw",
+    "event_id": "evt_claw",
+    "score": 55,
+    "p_abuse": 0.52,
+    "friction": "hard_challenge",
+    "ts": "2026-08-02T09:00:00Z"
+  },
+  {
+    "decision_id": "dec_synth",
+    "event_id": "evt_synth",
+    "score": 30,
+    "p_abuse": 0.12,
+    "friction": "allow",
+    "label_abuse": false,
+    "provenance": "synth",
+    "ts": "2026-08-02T10:00:00Z"
+  },
+  {
+    "decision_id": "dec_priority",
+    "event_id": "evt_priority",
+    "score": 80,
+    "p_abuse": 0.9,
+    "friction": "hard_challenge",
+    "ts": "2026-08-03T08:00:00Z"
+  }
+]
