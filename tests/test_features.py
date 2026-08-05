@@ -1,3 +1,4 @@
+from loyalty_abuse.calibration import load_calibration
 from loyalty_abuse.features import FeatureStore
 from loyalty_abuse.schema import EventEnvelope, EventType
 
@@ -191,3 +192,33 @@ def test_velocity_counts_ignore_other_tenant():
     )
     assert snap["redeem_count_5m"] == 0
     assert snap["signup_count_5m"] == 0
+
+
+def test_force_hard_floor_uses_calibration_thresholds(monkeypatch):
+    cal = load_calibration()
+    monkeypatch.setattr(
+        "loyalty_abuse.features.load_calibration",
+        lambda: {**cal, "hard_floor": {"redeem_5m": 3, "signup_5m": 15}},
+    )
+    store = FeatureStore()
+    for i in range(3):
+        store.observe(
+            _e(
+                event_id=f"r{i}",
+                type=EventType.redeem,
+                ts=f"2026-08-04T12:0{i}:00Z",
+                device_id="dev-bot",
+                payload={"offer_ids": []},
+            )
+        )
+    snap = store.snapshot(
+        _e(
+            event_id="r3",
+            type=EventType.redeem,
+            ts="2026-08-04T12:03:00Z",
+            device_id="dev-bot",
+            payload={"offer_ids": []},
+        )
+    )
+    assert snap["redeem_count_5m"] == 3
+    assert snap["force_hard_floor"] is True

@@ -4,11 +4,25 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from loyalty_abuse.calibration import load_calibration
 from loyalty_abuse.schema import EventEnvelope, EventType
 
 
 def _parse_ts(ts: str) -> datetime:
     return datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(timezone.utc)
+
+
+def _hard_floor_thresholds() -> tuple[int, int]:
+    floor = load_calibration().get("hard_floor") or {}
+    try:
+        redeem = int(floor.get("redeem_5m", 20))
+    except (TypeError, ValueError):
+        redeem = 20
+    try:
+        signup = int(floor.get("signup_5m", 15))
+    except (TypeError, ValueError):
+        signup = 15
+    return redeem, signup
 
 
 def _email_root(email: str | None) -> str | None:
@@ -170,7 +184,12 @@ class FeatureStore:
                 minutes_login_to_redeem = (now - login_t).total_seconds() / 60.0
                 break
 
-        force_hard = ato_chain or len(redeem_5m) >= 20 or len(signup_5m) >= 15
+        redeem_floor, signup_floor = _hard_floor_thresholds()
+        force_hard = (
+            ato_chain
+            or len(redeem_5m) >= redeem_floor
+            or len(signup_5m) >= signup_floor
+        )
         return {
             "accounts_on_device_24h": len(accounts_device),
             "accounts_on_ip_24h": len(accounts_ip),
