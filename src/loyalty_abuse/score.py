@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 
 from loyalty_abuse.calibration import load_calibration
+from loyalty_abuse.economics import expected_costs, liability_usd
 from loyalty_abuse.features import FeatureStore
 from loyalty_abuse.mathutil import clip
 from loyalty_abuse.policy import FrictionPolicy
@@ -33,6 +34,11 @@ def evaluate(
     active = [r for r in results if r.confidence > 0]
     reasons = [code for tr in active for code in tr.reasons]
     friction = policy.action_for(score, force_hard_floor=bool(snap.get("force_hard_floor")))
+    # Until Task 4 calibration: p_abuse = score/100
+    p_abuse = score / 100.0
+    loss_usd, insult_usd = expected_costs(
+        liability_usd(event), p_abuse, friction, cost=cal.get("cost")
+    )
     return Decision(
         decision_id="dec_" + uuid.uuid4().hex,
         event_id=event.event_id,
@@ -42,4 +48,6 @@ def evaluate(
         typology_breakdown=active,
         features_snapshot=snap,
         policy_version=policy.version,
+        expected_loss_usd=loss_usd,
+        expected_insult_usd=insult_usd,
     )

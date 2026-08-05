@@ -5,8 +5,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-SCHEMA_VERSION = 1
-POLICY_VERSION = "friction_v1_2"
+SCHEMA_VERSION = 2
+POLICY_VERSION = "friction_v2_0"
 
 
 class FrictionAction(str, Enum):
@@ -59,3 +59,5 @@ class Decision(BaseModel):
     features_snapshot: dict[str, Any]
     policy_version: str = POLICY_VERSION
     schema_version: int = SCHEMA_VERSION
+    expected_loss_usd: float = 0.0
+    expected_insult_usd: float = 0.0

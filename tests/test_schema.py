@@ -37,7 +37,9 @@ def test_decision_requires_reasons_and_breakdown():
         reasons=[],
         typology_breakdown=[],
         features_snapshot={},
-        policy_version="friction_v1_2",
+        policy_version="friction_v2_0",
         schema_version=SCHEMA_VERSION,
     )
-    assert d.schema_version == 1
+    assert d.schema_version == 2
+    assert d.expected_loss_usd == 0.0
+    assert d.expected_insult_usd == 0.0

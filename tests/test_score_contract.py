@@ -19,7 +19,7 @@ def test_points_sum_matches_score(case):
     d = evaluate(events[-1], store)
     pts = sum(t.points for t in d.typology_breakdown)
     assert abs(pts - d.score) <= 1
-    assert d.policy_version == "friction_v1_2"
+    assert d.policy_version == "friction_v2_0"
 
 
 def test_weighted_sum_no_max_weight_normalize():

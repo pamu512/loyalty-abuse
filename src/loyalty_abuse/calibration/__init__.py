@@ -5,7 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-_CAL_PATH = Path(__file__).with_name("friction_v1_2.json")
+_CAL_PATH = Path(__file__).with_name("friction_v2_0.json")
 
 
 class CalibrationError(ValueError):
@@ -24,7 +24,13 @@ def load_calibration() -> dict[str, Any]:
         if key not in bands:
             raise CalibrationError(f"bands missing {key}")
     if data.get("blend") != "weighted_sum":
-        raise CalibrationError("friction_v1_2 requires blend=weighted_sum")
+        raise CalibrationError("friction_v2_0 requires blend=weighted_sum")
+    cost = data.get("cost")
+    if not isinstance(cost, dict):
+        raise CalibrationError("friction_v2_0 requires cost block")
+    for key in ("C_fn_per_usd", "C_fp", "miss_fraction"):
+        if key not in cost:
+            raise CalibrationError(f"cost missing {key}")
     return data
 
 
