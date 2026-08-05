@@ -62,11 +62,11 @@ def _env(
     )
 
 
-def _score_journey(events: list[EventEnvelope]) -> FrictionAction:
+def _score_journey(events: list[EventEnvelope]):
     store = FeatureStore()
     for e in events[:-1]:
         store.observe(e)
-    return evaluate(events[-1], store).friction
+    return evaluate(events[-1], store)
 
 
 def _geq(friction: FrictionAction, minimum: FrictionAction) -> bool:
@@ -193,13 +193,14 @@ def gen_device_rotation(i: int, rng: random.Random, base: datetime) -> list[Even
 
 
 def gen_slow_multi_acct(i: int, rng: random.Random, base: datetime) -> list[EventEnvelope]:
-    """5 accounts on same device spaced >24h over 7d; cashout multi-signal."""
+    """5 accounts on same device spaced >24h over 7d; alias + IP + stacked cashout (no velocity floor)."""
     tenant = f"sm_{i}"
     device = f"dev_sm_{i}"
     ip = f"12.{i % 200}.3.3"
+    code = f"SLOW{i % 4}"
     events: list[EventEnvelope] = []
-    # 5 signups spaced >24h (25h+) across ~6 days
-    offsets_h = [144, 118, 90, 62, 30]
+    # 5 signups spaced >24h across ~6d; last is young (<60m) for young_multi_mult
+    offsets_h = [144.0, 118.0, 90.0, 62.0, 0.75]
     for j, oh in enumerate(offsets_h):
         acct = f"sm_{i}_{j}"
         events.append(
@@ -214,22 +215,22 @@ def gen_slow_multi_acct(i: int, rng: random.Random, base: datetime) -> list[Even
                 email=f"slow{i}+{j}@ex.com",
             )
         )
-    # terminal redeem burst → bot + hard_floor; last redeem stacked
-    last = f"sm_{i}_4"
-    for k in range(19):
+    # coordinated presence in last day → email_alias_burst_24h + device/IP cluster (not signup burst)
+    for j in range(5):
         events.append(
             _env(
-                f"rr_{i}_{k}",
+                f"l_{i}_{j}",
                 tenant=tenant,
-                ts=_ts(base, -2 + k * 0.05),
-                typ=EventType.redeem,
-                account=last,
+                ts=_ts(base, -50 + j * 8),
+                typ=EventType.login,
+                account=f"sm_{i}_{j}",
                 device=device,
                 ip=ip,
-                email=f"slow{i}+4@ex.com",
-                payload={"reward_id": "r", "points": 1, "offer_ids": [], "channel": "app"},
+                email=f"slow{i}+{j}@ex.com",
+                payload={"success": True},
             )
         )
+    last = f"sm_{i}_4"
     events.append(
         _env(
             f"r_{i}",
@@ -244,7 +245,7 @@ def gen_slow_multi_acct(i: int, rng: random.Random, base: datetime) -> list[Even
                 "reward_id": "r",
                 "points": 40,
                 "offer_ids": ["a", "b"],
-                "promo_codes": ["Z"],
+                "promo_codes": [code],
                 "loyalty_applied": ["pts"],
                 "discount_pct": 70,
                 "channel": "app",
@@ -255,11 +256,12 @@ def gen_slow_multi_acct(i: int, rng: random.Random, base: datetime) -> list[Even
 
 
 def gen_sequential_promo(i: int, rng: random.Random, base: datetime) -> list[EventEnvelope]:
-    """Stack builds across offer_enroll events, not one fat payload."""
+    """Stack builds across offer_enroll events + related code reuse on shared IP (no velocity floor)."""
     tenant = f"sp_{i}"
     acct = f"sp_{i}"
     device = f"dev_sp_{i}"
     ip = f"13.{i % 200}.4.4"
+    code = f"STACK{i % 3}"
     events: list[EventEnvelope] = [
         _env(
             f"s_{i}",
@@ -286,19 +288,39 @@ def gen_sequential_promo(i: int, rng: random.Random, base: datetime) -> list[Eve
                 payload={"offer_id": offer, "campaign_id": f"c{j}"},
             )
         )
-    # multi-signal cashout: velocity floor + accumulated stack + discount
-    for k in range(19):
+    # related code reuse: sibling accounts on same IP, distinct devices (rotation-safe, no hard_floor)
+    n_sib = 28
+    for k in range(n_sib):
+        sib = f"sp_{i}_sib{k}"
         events.append(
             _env(
-                f"rr_{i}_{k}",
+                f"ss_{i}_{k}",
                 tenant=tenant,
-                ts=_ts(base, -3 + k * 0.05),
-                typ=EventType.redeem,
-                account=acct,
-                device=device,
+                ts=_ts(base, -40 + k * 0.5),
+                typ=EventType.signup,
+                account=sib,
+                device=f"dev_sp_{i}_sib{k}",
                 ip=ip,
-                email=f"seq{i}@ex.com",
-                payload={"reward_id": "r", "points": 1, "offer_ids": [], "channel": "app"},
+                email=f"seq{i}+sib{k}@ex.com",
+            )
+        )
+        events.append(
+            _env(
+                f"sr_{i}_{k}",
+                tenant=tenant,
+                ts=_ts(base, -20 + k * 0.4),
+                typ=EventType.redeem,
+                account=sib,
+                device=f"dev_sp_{i}_sib{k}",
+                ip=ip,
+                email=f"seq{i}+sib{k}@ex.com",
+                payload={
+                    "reward_id": "r",
+                    "points": 5,
+                    "promo_codes": [code],
+                    "offer_ids": [],
+                    "channel": "app",
+                },
             )
         )
     events.append(
@@ -315,7 +337,7 @@ def gen_sequential_promo(i: int, rng: random.Random, base: datetime) -> list[Eve
                 "reward_id": "r",
                 "points": 30,
                 "offer_ids": [],
-                "promo_codes": ["STACK"],
+                "promo_codes": [code],
                 "discount_pct": 75,
                 "channel": "app",
             },
@@ -400,7 +422,7 @@ def run_suite(seed: int = 42, n_per_slice: int = N_PER_SLICE) -> dict[str, Any]:
             # independent sub-rng stream per journey for reproducibility
             jr = random.Random(rng.randint(0, 2**31 - 1))
             events = gen(j, jr, base)
-            frictions.append(_score_journey(events).value)
+            frictions.append(_score_journey(events).friction.value)
 
         n = len(frictions)
         allow_n = sum(1 for f in frictions if f == FrictionAction.allow.value)

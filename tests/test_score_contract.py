@@ -31,6 +31,6 @@ def test_weighted_sum_no_max_weight_normalize():
         store.observe(e)
     d = evaluate(events[-1], store)
     ato = next(t for t in d.typology_breakdown if t.id == "ato_redeem")
-    # w=0.22, c=0.85 → points ≈ 19; without max_w, score stays near that
-    assert ato.points == 19
-    assert abs(d.score - 19) <= 1
+    # w=0.20, c=0.85 → points ≈ 17; without max_w, score stays near that
+    assert ato.points == 17
+    assert abs(d.score - 17) <= 1

@@ -2,12 +2,12 @@
   "policy_version": "friction_v1_2",
   "blend": "weighted_sum",
   "weights": {
-    "ato_redeem": 0.22,
-    "multi_account": 0.18,
-    "bot_redeem": 0.18,
-    "referral_self_deal": 0.14,
+    "ato_redeem": 0.20,
+    "multi_account": 0.28,
+    "bot_redeem": 0.12,
+    "referral_self_deal": 0.08,
     "code_leak": 0.14,
-    "promo_stack": 0.14
+    "promo_stack": 0.18
   },
   "bands": {
     "allow_max": 24,
