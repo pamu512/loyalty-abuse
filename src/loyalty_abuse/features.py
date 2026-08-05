@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from loyalty_abuse.calibration import load_calibration
+from loyalty_abuse.device_intel import intel_force_hard_floor
 from loyalty_abuse.graph import cluster_features
 from loyalty_abuse.schema import EventEnvelope, EventType
 
@@ -237,10 +238,17 @@ class FeatureStore:
                 break
 
         redeem_floor, signup_floor = _hard_floor_thresholds()
+        payload = event.payload if isinstance(event.payload, dict) else {}
+        device_intel = (
+            dict(payload["device_intel"])
+            if isinstance(payload.get("device_intel"), dict)
+            else {}
+        )
         force_hard = (
             ato_chain
             or len(redeem_5m) >= redeem_floor
             or len(signup_5m) >= signup_floor
+            or intel_force_hard_floor(payload)
         )
         tenant_events = [
             e
@@ -274,6 +282,8 @@ class FeatureStore:
             "ato_known_device": ato_known_device,
             "minutes_login_to_redeem": minutes_login_to_redeem,
             "force_hard_floor": force_hard,
+            "device_intel": device_intel,
+            "device_intel_force_block": payload.get("device_intel_force_block") is True,
             "graph_cluster_size": graph["graph_cluster_size"],
             "graph_multi_hop_accounts": graph["graph_multi_hop_accounts"],
             "graph_age_diversity_hours": graph["graph_age_diversity_hours"],
