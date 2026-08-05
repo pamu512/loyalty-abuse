@@ -1,7 +1,7 @@
 # Phase 4 Design — Catch-Power + Shadow/Label Loop
 
 **Date:** 2026-08-05  
-**Status:** Approved for planning  
+**Status:** Implemented (catch-power + shadow/label loop + ops floor attribution); production A+/A++ not claimed  
 **Branch base:** `feat/phase-3-a-plus-plus` (Phases 1–3 complete)  
 **Program:** Extends `docs/superpowers/specs/2026-08-05-a-plus-plus-program-design.md`
 

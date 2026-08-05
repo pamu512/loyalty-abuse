@@ -1,7 +1,7 @@
 # A++ Program Design — QSR Loyalty Abuse Engine
 
 **Date:** 2026-08-05  
-**Status:** Phase 3 path complete (Incognia adapter, challenge outcomes, ops loop); production A++ not claimed  
+**Status:** Phase 4 path complete (catch-power `friction_v2_1`, shadow/label loop, ops floor attribution); production A+/A++ not claimed  
 **Repo:** standalone `loyalty-abuse`  
 **Prior art:** v1 engine + scoring math v1.1; critical review B−; path-to-A+ research canvas
 

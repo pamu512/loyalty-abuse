@@ -3,8 +3,11 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
+from loyalty_abuse.calibration import load_calibration
 from loyalty_abuse.economics import expected_loss_usd, liability_usd
-from loyalty_abuse.schema import EventEnvelope, FrictionAction
+from loyalty_abuse.floors import FRICTION_ORDER
+from loyalty_abuse.policy import FrictionPolicy
+from loyalty_abuse.schema import EventEnvelope, FrictionAction, POLICY_VERSION
 
 TYPOLOGY_IDS = (
     "multi_account",
@@ -124,6 +127,48 @@ def _intel_metrics(intel_calls: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _friction_rank(value: str) -> int:
+    try:
+        return FRICTION_ORDER.index(FrictionAction(value))
+    except ValueError:
+        return 0
+
+
+def _band_friction_for(decision: dict[str, Any]) -> str:
+    snap = decision.get("features_snapshot") or {}
+    band = snap.get("band_friction")
+    if band:
+        return str(band)
+    cal = load_calibration()
+    bands = cal["bands"]
+    policy = FrictionPolicy(
+        allow_max=int(bands["allow_max"]),
+        throttle_max=int(bands["throttle_max"]),
+        soft_max=int(bands["soft_max"]),
+        hard_max=int(bands["hard_max"]),
+        version=str(cal.get("policy_version") or POLICY_VERSION),
+    )
+    return policy.action_for(int(decision.get("score") or 0), force_hard_floor=False).value
+
+
+def _floor_raised(decision: dict[str, Any]) -> bool:
+    reasons = decision.get("reasons") or []
+    if any(str(r).startswith("floor.soft.") for r in reasons):
+        return True
+    final = str(decision.get("friction") or "allow")
+    band = _band_friction_for(decision)
+    return _friction_rank(final) > _friction_rank(band)
+
+
+def _floor_attribution(decisions: list[dict[str, Any]]) -> dict[str, Any]:
+    count = len(decisions)
+    raised = sum(1 for d in decisions if _floor_raised(d))
+    return {
+        "floor_raised_count": raised,
+        "floor_raised_rate": (raised / count if count else 0.0),
+    }
+
+
 def _challenge_conversion(outcomes: list[dict[str, Any]]) -> float | None:
     counted = [
         row
@@ -144,11 +189,14 @@ def build_ops_metrics(
     challenge_outcomes: list[dict[str, Any]] | None = None,
     events_by_id: dict[str, EventEnvelope] | None = None,
 ) -> dict[str, Any]:
+    floor = _floor_attribution(decisions)
     return {
         "insult_proxy": _insult_proxy(decisions, shadow_logs or []),
         "expected_loss": _expected_loss(decisions, events_by_id),
         "intel_calls": _intel_metrics(intel_calls or []),
         "challenge_conversion": _challenge_conversion(challenge_outcomes or []),
+        "floor_raised_count": floor["floor_raised_count"],
+        "floor_raised_rate": floor["floor_raised_rate"],
     }
 
 

@@ -53,6 +53,7 @@ def evaluate(
         reasons.append(INTEL_UNAVAILABLE_REASON)
     # Order: score band → soft floors → hard floor minimum
     band = policy.action_for(score, force_hard_floor=False)
+    snap["band_friction"] = band.value
     friction, floor_reasons = apply_soft_floors(
         band,
         snapshot=snap,

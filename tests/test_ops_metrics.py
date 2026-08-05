@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from loyalty_abuse.economics import expected_loss_usd, liability_usd
 from loyalty_abuse.schema import EventEnvelope, FrictionAction
+from loyalty_abuse_api.analytics import build_ops_metrics
 from loyalty_abuse_api.app import create_app
 from loyalty_abuse_api.db import Database
 
@@ -40,6 +41,8 @@ def test_ops_metrics_empty(tmp_path):
     assert body["intel_calls"]["success_rate"] is None
     assert body["intel_calls"]["p50_latency_ms"] is None
     assert body["challenge_conversion"] is None
+    assert body["floor_raised_count"] == 0
+    assert body["floor_raised_rate"] == 0.0
 
 
 def test_insult_proxy_allow_labeled_shadow(tmp_path):
@@ -141,3 +144,24 @@ def test_expected_loss_vs_allow_all(tmp_path):
     )
     assert el["allow_all_sum"] == allow_all
     assert el["allow_all_sum"] >= el["policy_sum"]
+
+
+def test_floor_raised_metrics():
+    metrics = build_ops_metrics(
+        decisions=[
+            {
+                "friction": "soft_challenge",
+                "score": 22,
+                "reasons": ["floor.soft.slow_multi"],
+                "features_snapshot": {"band_friction": "allow"},
+            },
+            {
+                "friction": "allow",
+                "score": 10,
+                "reasons": [],
+                "features_snapshot": {"band_friction": "allow"},
+            },
+        ]
+    )
+    assert metrics["floor_raised_count"] == 1
+    assert metrics["floor_raised_rate"] == 0.5

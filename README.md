@@ -118,6 +118,20 @@ Exit 1 if any adversarial slice fails its bound.
 
 **Not production A++:** Live A++ needs live Incognia, real challenge labels, and weeks of ops — do not claim production A++ from synthetic fixtures, dry-runs, or a 28-day sim alone.
 
+### Phase 4 — Catch-power + shadow/label loop (in-repo)
+
+**Catch-power (`friction_v2_1`):** Published interaction terms (`ix.*`) on the score blend plus soft-floor predicates (`floor.soft.*`) that raise friction without raising score. `evaluate()` stores `band_friction` in `features_snapshot` (score-band action before floors) for honest ops attribution.
+
+**Shadow/label loop:** Outcome labels join decisions; retrain gate checks held-out ECE; four-week playbook at [`docs/superpowers/playbooks/2026-08-05-shadow-four-week.md`](docs/superpowers/playbooks/2026-08-05-shadow-four-week.md); synthetic 28-day sim:
+
+```bash
+PYTHONPATH=src python3 scripts/shadow_four_week_sim.py --seed 42 --out artifacts/shadow_four_week_sim.json
+```
+
+Ops metrics on `GET /v1/analytics/summary` include `floor_raised_count` / `floor_raised_rate` (decisions where soft-floor reasons fired or final friction exceeds score-band friction).
+
+**Not production A+ / A++:** Phase 4 closes the in-repo path (catch-power, shadow logging, label join, retrain gate, playbook, sim). Production A+ and A++ still require **≥4 weeks** of live shadow vs host action and real outcome labels — the 28-day sim and adversarial suite prove wiring and honest catch only, not production grade.
+
 After decisions are persisted:
 
 ```bash

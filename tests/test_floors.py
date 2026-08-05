@@ -51,6 +51,7 @@ def test_slow_multi_soft_floor_raises_allow_to_soft_challenge(monkeypatch):
     d = evaluate(event, FeatureStore())
     assert d.score == 22
     assert d.friction == FrictionAction.soft_challenge
+    assert d.features_snapshot.get("band_friction") == "allow"
     assert "floor.soft.slow_multi" in d.reasons
 
 
