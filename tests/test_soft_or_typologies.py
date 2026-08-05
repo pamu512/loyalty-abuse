@@ -39,10 +39,11 @@ def test_multi_account_soft_or_not_max():
         ]
     )
     c_email = float(cal.get("email_burst_confidence") or 0.75)
-    expected = soft_or([c_dev, c_ip, c_email])
+    c_graph = sat(float(snap.get("graph_cluster_size") or 0), *sat_params("graph_cluster_size"))
+    expected = soft_or([c_dev, c_ip, c_email, c_graph])
     r = multi_account.score(snap)
     assert r.confidence == expected
-    assert r.confidence > max(c_dev, c_ip, c_email)
+    assert r.confidence > max(c_dev, c_ip, c_email, c_graph)
     assert r.confidence > 0.75
 
 

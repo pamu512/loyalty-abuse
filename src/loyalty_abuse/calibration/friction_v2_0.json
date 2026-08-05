@@ -28,7 +28,8 @@
     "code_unique_users_24h": { "a": 15, "b": 50 },
     "code_unique_users_7d": { "a": 25, "b": 80 },
     "stack_depth": { "a": 2, "b": 5 },
-    "discount_depth": { "a": 30, "b": 70 }
+    "discount_depth": { "a": 30, "b": 70 },
+    "graph_cluster_size": { "a": 3, "b": 8 }
   },
   "hard_floor": { "redeem_5m": 20, "signup_5m": 15 },
   "young_account_minutes": 60,

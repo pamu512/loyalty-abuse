@@ -27,7 +27,10 @@ def score(snapshot: dict[str, Any]) -> TypologyResult:
     c_email = (
         float(cal.get("email_burst_confidence") or 0.75) if snapshot.get("email_alias_burst") else 0.0
     )
-    c = soft_or([c_dev, c_ip, c_email])
+    c_graph = sat(
+        float(snapshot.get("graph_cluster_size") or 0), *sat_params("graph_cluster_size")
+    )
+    c = soft_or([c_dev, c_ip, c_email, c_graph])
     young = float(cal.get("young_account_minutes") or 60)
     if float(snapshot.get("account_age_minutes") or 0) < young and int(
         snapshot.get("accounts_on_device_24h") or 0
@@ -40,4 +43,6 @@ def score(snapshot: dict[str, Any]) -> TypologyResult:
         reasons.append("multi_acct.shared_ip_cluster")
     if c_email > 0:
         reasons.append("multi_acct.email_alias_burst")
+    if c_graph > 0:
+        reasons.append("multi_acct.graph_cluster")
     return result("multi_account", c, reasons)

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from loyalty_abuse.calibration import load_calibration
+from loyalty_abuse.graph import cluster_features
 from loyalty_abuse.schema import EventEnvelope, EventType
 
 
@@ -241,6 +242,12 @@ class FeatureStore:
             or len(redeem_5m) >= redeem_floor
             or len(signup_5m) >= signup_floor
         )
+        tenant_events = [
+            e
+            for e in self._events
+            if e.tenant_id == event.tenant_id and _parse_ts(e.ts) <= now
+        ]
+        graph = cluster_features(tenant_events, event.account_id, now)
         return {
             "accounts_on_device_1h": accounts_device["1h"],
             "accounts_on_device_24h": accounts_device["24h"],
@@ -267,4 +274,8 @@ class FeatureStore:
             "ato_known_device": ato_known_device,
             "minutes_login_to_redeem": minutes_login_to_redeem,
             "force_hard_floor": force_hard,
+            "graph_cluster_size": graph["graph_cluster_size"],
+            "graph_multi_hop_accounts": graph["graph_multi_hop_accounts"],
+            "graph_age_diversity_hours": graph["graph_age_diversity_hours"],
+            "graph_shared_attr_rarity": graph["graph_shared_attr_rarity"],
         }
