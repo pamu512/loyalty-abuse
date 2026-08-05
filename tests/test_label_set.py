@@ -76,6 +76,39 @@ def test_clawback_priority_over_failed_outcome():
     assert row["label_abuse"] is True
 
 
+def test_failed_wins_over_abandoned_on_same_decision():
+    decisions = [
+        {
+            "decision_id": "dec_both",
+            "event_id": "evt_both",
+            "score": 40,
+            "p_abuse": 0.4,
+            "friction": "soft_challenge",
+            "ts": "2026-08-01T00:00:00Z",
+        }
+    ]
+    outcomes = [
+        {"decision_id": "dec_both", "outcome": "abandoned", "ts": "2026-08-01T01:00:00Z"},
+        {"decision_id": "dec_both", "outcome": "failed", "ts": "2026-08-01T02:00:00Z"},
+    ]
+    rows = build_label_rows(decisions, outcomes)
+    assert len(rows) == 1
+    assert rows[0]["provenance"] == "challenge_failed"
+    assert rows[0]["label_abuse"] is True
+
+
+def test_unknown_clawback_decision_id_dropped():
+    decisions = _load("decisions.json")
+    clawbacks = [
+        {"decision_id": "dec_missing", "label": "abuse", "ts": "2026-08-04T00:00:00Z"},
+        {"event_id": "evt_does_not_exist", "label": "abuse", "ts": "2026-08-04T00:00:00Z"},
+    ]
+    rows = build_label_rows(decisions, outcomes=[], clawbacks=clawbacks)
+    ids = {r["decision_id"] for r in rows}
+    assert "dec_missing" not in ids
+    assert all(r.get("event_id") != "evt_does_not_exist" for r in rows)
+
+
 def test_synth_provenance_from_decision():
     decisions = _load("decisions.json")
     rows = build_label_rows(decisions, outcomes=[])
