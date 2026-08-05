@@ -29,6 +29,14 @@ class Database:
                 body_json TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS shadow_logs (
+                decision_id TEXT PRIMARY KEY,
+                event_id TEXT NOT NULL,
+                recommended_friction TEXT NOT NULL,
+                host_friction TEXT,
+                body_json TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
             """
         )
         self._conn.commit()
@@ -109,3 +117,48 @@ class Database:
             "SELECT body_json FROM decisions ORDER BY created_at ASC, decision_id ASC"
         ).fetchall()
         return [Decision.model_validate_json(row["body_json"]) for row in rows]
+
+    def save_shadow_log(
+        self,
+        decision: Decision,
+        *,
+        host_friction: str | None = None,
+    ) -> None:
+        created_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        self._conn.execute(
+            """
+            INSERT INTO shadow_logs (
+                decision_id, event_id, recommended_friction, host_friction, body_json, created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                decision.decision_id,
+                decision.event_id,
+                decision.friction.value,
+                host_friction,
+                decision.model_dump_json(),
+                created_at,
+            ),
+        )
+        self._conn.commit()
+
+    def list_shadow_logs(self) -> list[dict]:
+        rows = self._conn.execute(
+            """
+            SELECT decision_id, event_id, recommended_friction, host_friction, body_json, created_at
+            FROM shadow_logs
+            ORDER BY created_at ASC, decision_id ASC
+            """
+        ).fetchall()
+        return [
+            {
+                "decision_id": row["decision_id"],
+                "event_id": row["event_id"],
+                "recommended_friction": row["recommended_friction"],
+                "host_friction": row["host_friction"],
+                "body_json": row["body_json"],
+                "created_at": row["created_at"],
+            }
+            for row in rows
+        ]

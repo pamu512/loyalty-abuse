@@ -49,7 +49,8 @@ Set `LOYALTY_ABUSE_DB` to override the SQLite path (default `loyalty_abuse.db`).
 | Endpoint | Purpose |
 |---|---|
 | `POST /v1/events` | Ingest `EventEnvelope`; optional `"evaluate": true` |
-| `POST /v1/evaluate` | Score by `event_id` or inline `event` |
+| `POST /v1/evaluate` | Score by `event_id` or inline `event` (enforcing) |
+| `POST /v1/shadow/evaluate` | Shadow score; optional `host_friction`; logs recommended vs host |
 | `GET /v1/decisions/{id}` | Fetch audited decision |
 | `GET /v1/analytics/summary` | Friction mix, top reasons, typology rates |
 | `/` | Static analytics dashboard |
@@ -85,6 +86,14 @@ Exit code 0 only when all slice bounds pass (household FP allow-rate, device-rot
 **Honest B+ claim:** Catch slices stack multiple typologies under `weighted_sum` (single typology capped ~28, below soft_challenge at 45). Anti-vanity forbids velocity hard_floor padding without pattern reason families. `ato_known_device` may elevate via `ato_chain` hybrid hard_floor while confidence still contributes to score.
 
 The synthetic 500k eval (`scripts/synth_eval.py`) is **regression-only** — it must not be cited as the B+ grade claim.
+
+**Shadow pipeline:** `POST /v1/shadow/evaluate` logs recommended friction vs optional host action without changing the live enforcing path. Chronological synthetic dry-run:
+
+```bash
+python scripts/shadow_dry_run.py --n 200 --days 14 --out artifacts/shadow_dry_run.json
+```
+
+Emits precision / recall / insult-proxy under `artifacts/`. The pipeline exists in-repo; **production A+ still needs ≥4 weeks of real later-confirmed labels** — do not claim live A+ from the synthetic dry-run alone.
 
 After decisions are persisted:
 

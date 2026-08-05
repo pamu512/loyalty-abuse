@@ -24,12 +24,29 @@ class EvaluateRequest(BaseModel):
     event: EventEnvelope | None = None
 
 
+class ShadowEvaluateRequest(BaseModel):
+    event_id: str | None = None
+    event: EventEnvelope | None = None
+    host_friction: str | None = None
+
+
 def _store_for_event(db: Database, event: EventEnvelope) -> FeatureStore:
     # Rebuild from DB; only prior events — evaluate() observes the scored event.
     store = FeatureStore()
     for prior in db.list_tenant_events(event.tenant_id, exclude_event_id=event.event_id):
         store.observe(prior)
     return store
+
+
+def _resolve_event(db: Database, body: EvaluateRequest | ShadowEvaluateRequest) -> EventEnvelope:
+    if body.event is not None:
+        return body.event
+    if body.event_id is not None:
+        event = db.get_event(body.event_id)
+        if event is None:
+            raise HTTPException(status_code=404, detail="event not found")
+        return event
+    raise HTTPException(status_code=422, detail="event_id or event required")
 
 
 def _run_evaluate(db: Database, event: EventEnvelope) -> Decision:
@@ -45,6 +62,27 @@ def _run_evaluate(db: Database, event: EventEnvelope) -> Decision:
         db.save_decision(decision)
     except Exception as exc:
         raise HTTPException(status_code=503, detail="decision audit failed") from exc
+    return decision
+
+
+def _run_shadow_evaluate(
+    db: Database,
+    event: EventEnvelope,
+    *,
+    host_friction: str | None = None,
+) -> Decision:
+    try:
+        db.save_event(event)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="event persist failed") from exc
+
+    store = _store_for_event(db, event)
+    decision = evaluate(event, store)
+
+    try:
+        db.save_shadow_log(decision, host_friction=host_friction)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="shadow log failed") from exc
     return decision
 
 
@@ -65,15 +103,15 @@ def create_app(db_path: str | Path = "loyalty_abuse.db") -> FastAPI:
 
     @app.post("/v1/evaluate")
     def post_evaluate(body: EvaluateRequest) -> dict[str, Any]:
-        if body.event is not None:
-            event = body.event
-        elif body.event_id is not None:
-            event = app.state.db.get_event(body.event_id)
-            if event is None:
-                raise HTTPException(status_code=404, detail="event not found")
-        else:
-            raise HTTPException(status_code=422, detail="event_id or event required")
+        event = _resolve_event(app.state.db, body)
         return _run_evaluate(app.state.db, event).model_dump(mode="json")
+
+    @app.post("/v1/shadow/evaluate")
+    def post_shadow_evaluate(body: ShadowEvaluateRequest) -> dict[str, Any]:
+        event = _resolve_event(app.state.db, body)
+        return _run_shadow_evaluate(
+            app.state.db, event, host_friction=body.host_friction
+        ).model_dump(mode="json")
 
     @app.get("/v1/decisions/{decision_id}")
     def get_decision(decision_id: str) -> dict[str, Any]:
