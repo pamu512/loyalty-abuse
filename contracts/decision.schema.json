@@ -48,7 +48,7 @@
       }
     },
     "features_snapshot": { "type": "object", "additionalProperties": true },
-    "policy_version": { "type": "string", "default": "friction_v1_1" },
+    "policy_version": { "type": "string", "default": "friction_v1_2" },
     "schema_version": { "type": "integer", "default": 1 }
   },
   "additionalProperties": false

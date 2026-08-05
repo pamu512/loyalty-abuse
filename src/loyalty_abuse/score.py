@@ -28,14 +28,8 @@ def evaluate(
     snap = store.snapshot(event)
     results = [s(snap) for s in ALL_SCORERS]
     weights = cal["weights"]
-    weighted = 0.0
-    for r in results:
-        w = float(weights.get(r.id) or 0.0)
-        weighted += w * float(r.confidence)
-    # max_weight_normalize: one typology at c=1 can reach score 100
-    max_w = max(float(v) for v in weights.values()) or 1.0
-    raw = weighted / max_w
-    score = int(round(100.0 * clip(raw)))
+    weighted = sum(float(weights.get(r.id) or 0.0) * float(r.confidence) for r in results)
+    score = int(round(100.0 * clip(weighted)))
     active = [r for r in results if r.confidence > 0]
     reasons = [code for tr in active for code in tr.reasons]
     friction = policy.action_for(score, force_hard_floor=bool(snap.get("force_hard_floor")))

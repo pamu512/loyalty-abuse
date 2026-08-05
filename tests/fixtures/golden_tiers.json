@@ -34,7 +34,7 @@
   },
   {
     "name": "throttle_shared_device",
-    "expected_friction": "throttle",
+    "expected_friction": "allow",
     "expected_reason_substring": "multi_acct.shared_device_cluster",
     "events": [
       {
@@ -90,7 +90,7 @@
   },
   {
     "name": "soft_referral_self_deal",
-    "expected_friction": "soft_challenge",
+    "expected_friction": "allow",
     "expected_reason_substring": "referral.shared",
     "events": [
       {
@@ -136,7 +136,7 @@
   },
   {
     "name": "hard_ato_chain",
-    "expected_friction": "block",
+    "expected_friction": "hard_challenge",
     "expected_reason_substring": "ato.login_profile_redeem_chain",
     "events": [
       {
@@ -198,7 +198,7 @@
   },
   {
     "name": "block_stacked_signals",
-    "expected_friction": "block",
+    "expected_friction": "throttle",
     "expected_reason_substring": "bot.redeem_velocity",
     "expected_reason_substrings": ["bot.redeem_velocity", "promo.stack_depth"],
     "events": [

@@ -5,7 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-_CAL_PATH = Path(__file__).with_name("friction_v1_1.json")
+_CAL_PATH = Path(__file__).with_name("friction_v1_2.json")
 
 
 class CalibrationError(ValueError):
@@ -23,6 +23,8 @@ def load_calibration() -> dict[str, Any]:
     for key in ("allow_max", "throttle_max", "soft_max", "hard_max"):
         if key not in bands:
             raise CalibrationError(f"bands missing {key}")
+    if data.get("blend") != "weighted_sum":
+        raise CalibrationError("friction_v1_2 requires blend=weighted_sum")
     return data
 
 

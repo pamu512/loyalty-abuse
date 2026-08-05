@@ -6,7 +6,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 SCHEMA_VERSION = 1
-POLICY_VERSION = "friction_v1_1"
+POLICY_VERSION = "friction_v1_2"
 
 
 class FrictionAction(str, Enum):

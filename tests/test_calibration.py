@@ -8,4 +8,6 @@ def test_weights_sum_to_one():
 
 
 def test_policy_version():
-    assert load_calibration()["policy_version"] == "friction_v1_1"
+    cal = load_calibration()
+    assert cal["policy_version"] == "friction_v1_2"
+    assert cal["blend"] == "weighted_sum"
