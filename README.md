@@ -75,25 +75,34 @@ Seeds six abuse patterns (multi-account, promo stack, referral self-deal, bot re
 
 ## Offline evaluation
 
-**Honest B+ proof** is the adversarial suite (not the large synth run):
+**Grade claims** (see [program spec](docs/superpowers/specs/2026-08-05-a-plus-plus-program-design.md)) require the artifacts below — not synth gate polish.
+
+### Primary gate (B+ floor, still required)
+
+Adversarial suite on `friction_v2_0` (`policy_version` in artifact):
 
 ```bash
-python scripts/adversarial_eval.py --seed 42 --out artifacts/adversarial_v1_2.json
+PYTHONPATH=src python3 scripts/adversarial_eval.py --seed 42 --out artifacts/adversarial_v2_0.json
 ```
 
 Exit code 0 only when all slice bounds pass (household FP allow-rate, device-rotation / slow-multi / sequential-promo / known-device ATO catch-rates). See `src/loyalty_abuse/eval/adversarial.py` for published bounds.
 
-**Honest B+ claim:** Catch slices stack multiple typologies under `weighted_sum` (single typology capped ~28, below soft_challenge at 45). Anti-vanity forbids velocity hard_floor padding without pattern reason families. `ato_known_device` may elevate via `ato_chain` hybrid hard_floor while confidence still contributes to score.
+The synthetic 500k eval (`scripts/synth_eval.py`) is **regression-only** — it must not be cited as a grade claim.
 
-The synthetic 500k eval (`scripts/synth_eval.py`) is **regression-only** — it must not be cited as the B+ grade claim.
+### Standalone A bar (Phase 2 — in-repo)
 
-**Shadow pipeline:** `POST /v1/shadow/evaluate` logs recommended friction vs optional host action without changing the live enforcing path. Chronological synthetic dry-run:
+| Artifact | Command | Published result |
+|---|---|---|
+| Cost-optimal knees | `PYTHONPATH=src python3 scripts/select_thresholds.py --val-seed 7 --report-seed 42` | Val cost 2975→2275; report cost 4371→3514; bands `{24,28,48,68}` |
+| Graph ablation | `PYTHONPATH=src python3 scripts/ablation_graph.py --seed 42` | Household allow 0pp drop; catch/cost unchanged on this holdout |
+| Platt + ECE/Brier | `PYTHONPATH=src python3 scripts/fit_calibration.py --fit-seed 7 --report-seed 42` | Held-out seed 42 ECE ≈ 0; labels: synthetic red-team 2026-08-05 |
+| Shadow dry-run | `PYTHONPATH=src python3 scripts/shadow_dry_run.py --n 200 --days 14` | Pipeline exists; synthetic precision/recall/insult-proxy only |
 
-```bash
-python scripts/shadow_dry_run.py --n 200 --days 14 --out artifacts/shadow_dry_run.json
-```
+Summaries: [`docs/superpowers/artifacts/`](docs/superpowers/artifacts/). Raw JSON under `artifacts/` (gitignored).
 
-Emits precision / recall / insult-proxy under `artifacts/`. The pipeline exists in-repo; **production A+ still needs ≥4 weeks of real later-confirmed labels** — do not claim live A+ from the synthetic dry-run alone.
+**Honest standalone A claim:** Dollar-weighted threshold selection, graph ablation report, calibrated `p_abuse` with held-out ECE, and shadow logging are all wired and published. Graph ablation shows no incremental catch on this synthetic holdout — graph value remains unproven until denser tenant graphs or production labels.
+
+**Not production A+:** Live A+ additionally requires real later-confirmed outcome labels and **≥4 weeks** of shadow vs host action. The synthetic dry-run (`artifacts/shadow_dry_run.json`: precision 1.0, recall 0.4, insult_proxy 0.0) proves the reporter path only — do not claim live A+ from it.
 
 After decisions are persisted:
 
@@ -101,7 +110,7 @@ After decisions are persisted:
 python notebooks/offline_eval.py --db loyalty_abuse.db
 ```
 
-Prints stored friction distribution, reason coverage, and a threshold sweep (24/44/64/84 vs 20/40/60/80).
+Prints stored friction distribution, reason coverage, and a threshold sweep (baseline `{24,44,64,84}` vs selected `{24,28,48,68}`).
 
 ## Tests
 

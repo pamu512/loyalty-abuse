@@ -1,7 +1,7 @@
 # A++ Program Design — QSR Loyalty Abuse Engine
 
 **Date:** 2026-08-05  
-**Status:** Phase 1 complete (B+ bar met); Phase 2+ pending plan  
+**Status:** Phase 2 complete (standalone A bar met); Phase 3 pending  
 **Repo:** standalone `loyalty-abuse`  
 **Prior art:** v1 engine + scoring math v1.1; critical review B−; path-to-A+ research canvas
 
