@@ -82,3 +82,102 @@ def test_incognia_signals_is_frozen():
     )
     with pytest.raises(Exception):
         s.risk_assessment = "high_risk"  # type: ignore[misc]
+
+
+_INCOGNIA_ENV = (
+    "INCOGNIA_CLIENT_ID",
+    "INCOGNIA_CLIENT_SECRET",
+    "INCOGNIA_POLICY_ID",
+)
+
+
+def test_fetch_signals_without_env_uses_fixture(monkeypatch):
+    for key in _INCOGNIA_ENV:
+        monkeypatch.delenv(key, raising=False)
+
+    from adapters.incognia import fetch_signals
+
+    signals = fetch_signals(
+        request_token="tok",
+        account_id="acct-1",
+        event_type="login",
+    )
+    assert signals.source == "fixture"
+    assert signals.risk_assessment == "low_risk"
+    assert signals.raw_id == "fix-login-low"
+
+
+def test_fetch_signals_live_mocked_high_risk(monkeypatch):
+    monkeypatch.setenv("INCOGNIA_CLIENT_ID", "cid")
+    monkeypatch.setenv("INCOGNIA_CLIENT_SECRET", "csecret")
+    monkeypatch.setenv("INCOGNIA_POLICY_ID", "pol")
+
+    high = _load("login_high_risk.json")
+
+    class _FakeAPI:
+        def __init__(self, client_id: str, client_secret: str) -> None:
+            self.client_id = client_id
+            self.client_secret = client_secret
+
+        def register_login(self, request_token, account_id, external_id=None, policy_id=None):
+            return high
+
+        def register_new_signup(self, request_token, **kwargs):
+            raise AssertionError("login event must not call signup")
+
+    import sys
+    import types
+
+    api_mod = types.ModuleType("incognia.api")
+    api_mod.IncogniaAPI = _FakeAPI
+    pkg = types.ModuleType("incognia")
+    pkg.api = api_mod
+    monkeypatch.setitem(sys.modules, "incognia", pkg)
+    monkeypatch.setitem(sys.modules, "incognia.api", api_mod)
+
+    from adapters.incognia import fetch_signals
+
+    signals = fetch_signals(
+        request_token="tok",
+        account_id="acct-1",
+        event_type="login",
+        external_id="ext-1",
+    )
+    assert signals.source == "live"
+    assert signals.risk_assessment == "high_risk"
+    assert signals.tamper_suspected is True
+    assert signals.emulator is True
+    assert signals.raw_id == "fix-login-high"
+
+
+def test_fetch_signals_live_error_returns_unavailable(monkeypatch):
+    monkeypatch.setenv("INCOGNIA_CLIENT_ID", "cid")
+    monkeypatch.setenv("INCOGNIA_CLIENT_SECRET", "csecret")
+    monkeypatch.setenv("INCOGNIA_POLICY_ID", "pol")
+
+    class _BoomAPI:
+        def __init__(self, *args, **kwargs) -> None:
+            pass
+
+        def register_login(self, *args, **kwargs):
+            raise TimeoutError("simulated timeout")
+
+    import sys
+    import types
+
+    api_mod = types.ModuleType("incognia.api")
+    api_mod.IncogniaAPI = _BoomAPI
+    pkg = types.ModuleType("incognia")
+    pkg.api = api_mod
+    monkeypatch.setitem(sys.modules, "incognia", pkg)
+    monkeypatch.setitem(sys.modules, "incognia.api", api_mod)
+
+    from adapters.incognia import fetch_signals
+
+    signals = fetch_signals(
+        request_token="tok",
+        account_id="acct-1",
+        event_type="login",
+    )
+    assert signals.source == "unavailable"
+    assert signals.risk_assessment == "unknown_risk"

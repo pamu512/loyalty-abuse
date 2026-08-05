@@ -11,9 +11,9 @@ Core `loyalty_abuse` never imports this package or the vendor SDK.
 | Live | `INCOGNIA_CLIENT_ID`, `INCOGNIA_CLIENT_SECRET`, `INCOGNIA_POLICY_ID` set and optional extra installed | `live` |
 | Unavailable | Live call fails / SDK missing when required path degrades | `unavailable` |
 
-Live client (`fetch_signals`) is Task 2 — this package currently ships normalize + pinned fixtures only.
+`fetch_signals` loads a fixture when env creds are absent; live SDK calls only when all three env vars are set and the `[incognia]` optional extra is installed.
 
-## Env vars (live; Task 2)
+## Env vars (live)
 
 - `INCOGNIA_CLIENT_ID`
 - `INCOGNIA_CLIENT_SECRET`
