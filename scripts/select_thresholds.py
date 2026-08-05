@@ -85,6 +85,15 @@ def main() -> int:
         help="Write selected bands into friction_v2_0.json (val seed only).",
     )
     p.add_argument("--synth-n", type=int, default=200)
+    p.add_argument(
+        "--baseline-bands",
+        type=str,
+        default=None,
+        help=(
+            "JSON object for frozen pre-selection baseline "
+            f"(default: {json.dumps(DEFAULT_BASELINE)})."
+        ),
+    )
     args = p.parse_args()
 
     if args.val_seed == args.report_seed:
@@ -94,7 +103,15 @@ def main() -> int:
     load_calibration.cache_clear()
     cal = load_calibration()
     cost = cal["cost"]
-    baseline = dict(cal.get("bands") or DEFAULT_BASELINE)
+    # Frozen pre-selection baseline — not live cal bands (re-runs after --update-cal).
+    if args.baseline_bands:
+        baseline = json.loads(args.baseline_bands)
+        for k in ("allow_max", "throttle_max", "soft_max", "hard_max"):
+            if k not in baseline:
+                print(f"error: baseline-bands missing {k!r}", file=sys.stderr)
+                return 2
+    else:
+        baseline = dict(DEFAULT_BASELINE)
 
     # --- selection: val seed only ---
     val_rows = build_adversarial_labeled_rows(args.val_seed)
