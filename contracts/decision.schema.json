@@ -51,7 +51,8 @@
     "policy_version": { "type": "string", "default": "friction_v2_0" },
     "schema_version": { "type": "integer", "default": 2 },
     "expected_loss_usd": { "type": "number", "default": 0.0 },
-    "expected_insult_usd": { "type": "number", "default": 0.0 }
+    "expected_insult_usd": { "type": "number", "default": 0.0 },
+    "p_abuse": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.0 }
   },
   "additionalProperties": false
 }

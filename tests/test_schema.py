@@ -43,3 +43,4 @@ def test_decision_requires_reasons_and_breakdown():
     assert d.schema_version == 2
     assert d.expected_loss_usd == 0.0
     assert d.expected_insult_usd == 0.0
+    assert d.p_abuse == 0.0

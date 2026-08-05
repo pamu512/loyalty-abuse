@@ -61,3 +61,4 @@ class Decision(BaseModel):
     schema_version: int = SCHEMA_VERSION
     expected_loss_usd: float = 0.0
     expected_insult_usd: float = 0.0
+    p_abuse: float = 0.0

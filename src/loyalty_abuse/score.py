@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 
+from loyalty_abuse.calibrate import predict_calibrated
 from loyalty_abuse.calibration import load_calibration
 from loyalty_abuse.economics import expected_costs, liability_usd
 from loyalty_abuse.features import FeatureStore
@@ -34,8 +35,7 @@ def evaluate(
     active = [r for r in results if r.confidence > 0]
     reasons = [code for tr in active for code in tr.reasons]
     friction = policy.action_for(score, force_hard_floor=bool(snap.get("force_hard_floor")))
-    # Until Task 4 calibration: p_abuse = score/100
-    p_abuse = score / 100.0
+    p_abuse = predict_calibrated(score / 100.0)
     loss_usd, insult_usd = expected_costs(
         liability_usd(event), p_abuse, friction, cost=cal.get("cost")
     )
@@ -50,4 +50,5 @@ def evaluate(
         policy_version=policy.version,
         expected_loss_usd=loss_usd,
         expected_insult_usd=insult_usd,
+        p_abuse=p_abuse,
     )

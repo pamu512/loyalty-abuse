@@ -31,6 +31,7 @@ DECISION_EXAMPLE = {
     "schema_version": SCHEMA_VERSION,
     "expected_loss_usd": 0.0,
     "expected_insult_usd": 0.0,
+    "p_abuse": 0.0,
 }
 
 EVALUATE_BY_ID = {"event_id": "evt_contract_1"}

@@ -1,0 +1,10 @@
+{
+  "version": "platt_v2_0",
+  "method": "platt",
+  "a": 412.4154944728053,
+  "b": -22.77503564100623,
+  "fit_seed": 7,
+  "report_seed": 42,
+  "label_provenance": "synthetic red-team 2026-08-05",
+  "ece_target": 0.05
+}

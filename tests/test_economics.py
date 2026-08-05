@@ -95,9 +95,9 @@ def test_evaluate_sets_expected_fields():
     assert d.score > 0
     liab = liability_usd(e)
     assert liab == 20.0
-    p_abuse = d.score / 100.0
+    assert 0.0 <= d.p_abuse <= 1.0
     exp_loss, exp_insult = expected_costs(
-        liab, p_abuse, d.friction, cost=load_calibration().get("cost")
+        liab, d.p_abuse, d.friction, cost=load_calibration().get("cost")
     )
     assert d.expected_loss_usd == exp_loss
     assert d.expected_insult_usd == exp_insult
