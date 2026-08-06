@@ -115,7 +115,7 @@ The synthetic 500k eval (`scripts/synth_eval.py`) is **regression-only** — it 
 |---|---|---|
 | Cost-optimal knees | `PYTHONPATH=src python3 scripts/select_thresholds.py --val-seed 7 --report-seed 42` | Val cost 2975→2275; report cost 4371→3514; bands `{24,28,48,68}` |
 | Graph ablation | `PYTHONPATH=src python3 scripts/ablation_graph.py --seed 42` | Household allow 0pp drop; catch/cost unchanged on this holdout |
-| Platt + ECE/Brier | `PYTHONPATH=src python3 scripts/fit_calibration.py --fit-seed 7 --report-seed 42` | Held-out seed 42 ECE ≈ 0; labels: synthetic red-team 2026-08-05 |
+| Platt + ECE/Brier | `PYTHONPATH=src python3 scripts/fit_calibration.py --fit-seed 7 --report-seed 42` | Synth score-path ECE ~0.14 (ceiling **0.15**); production outcome ECE must be ≤**0.05** via `fit_calibration_from_labels.py` |
 | Shadow dry-run | `PYTHONPATH=src python3 scripts/shadow_dry_run.py --n 200 --days 14` | Pipeline exists; synthetic precision/recall/insult-proxy only |
 
 Summaries: [`docs/superpowers/artifacts/`](docs/superpowers/artifacts/). Raw JSON under `artifacts/` (gitignored).
@@ -124,7 +124,7 @@ Claim lock: [`docs/compliance/CLAIM_LOCK.md`](docs/compliance/CLAIM_LOCK.md).
 
 **Honest standalone A claim:** Dollar-weighted threshold selection, graph ablation report, calibrated `p_abuse` with held-out ECE, and shadow logging are all wired and published. Graph ablation shows no incremental catch on this synthetic holdout — graph value remains unproven until denser tenant graphs or production labels.
 
-**Not production A+:** Live A+ additionally requires real later-confirmed outcome labels and **≥4 weeks** of shadow vs host action. The synthetic dry-run (`artifacts/shadow_dry_run.json`: precision 1.0, recall 0.4, insult_proxy 0.0) and any in-repo 28-day sim prove pipeline wiring only — do not claim production A+ from them.
+**Not production A+:** Live A+ additionally requires real later-confirmed outcome labels and **≥4 weeks** of shadow vs host action. The synthetic dry-run (`artifacts/shadow_dry_run.json`: precision 1.0, recall 0.4, insult_proxy 0.0) and any in-repo 28-day sim prove pipeline wiring only — do not claim production A+ from them. Fail-closed gate: `python3 scripts/assert_production_a_plus.py` (exits 1 if status is MET without valid live evidence).
 
 ### A++ path (Phase 3 — in-repo)
 

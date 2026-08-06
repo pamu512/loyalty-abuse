@@ -31,7 +31,8 @@ from loyalty_abuse.calibrate import (  # noqa: E402
 PRODUCTION_PROVENANCE = frozenset(
     {"challenge_failed", "challenge_abandoned", "clawback"}
 )
-ECE_TARGET = 0.08
+# Spec / CLAIM_LOCK / assert_production_a_plus: production outcome ECE ≤ 0.05
+ECE_TARGET = 0.05
 PLATT_L2 = 1.0
 PLATT_A_ABS_MAX = 12.0
 MIN_ROWS = 30

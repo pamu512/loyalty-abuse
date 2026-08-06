@@ -2,35 +2,40 @@
 
 **Date:** 2026-08-06  
 **Policy:** `friction_v3_0`  
-**Program:** Twin-track v2 (product + math) — see `docs/superpowers/specs/2026-08-06-loyalty-abuse-v2-design.md`
+**Program:** Twin-track v2 — `docs/superpowers/specs/2026-08-06-loyalty-abuse-v2-design.md`
 
 ## What may be claimed
 
 | Claim | Status | Evidence |
 |---|---|---|
 | **B+** | MET | `artifacts/adversarial_v3_0.json` gates_pass |
-| **Standalone A / A+ (technical)** | MET | Auditor gates + external holdout + deploy/auth product surface |
+| **Standalone A / A+ (technical)** | MET | Adversarial + external holdout + ablation + auth/deploy/dashboard + `/v1/decide` |
 | **A++ path (in-repo)** | MET | Incognia fixture+live-gated; outcomes; drift; ops dashboard |
-| **Production A+** | NOT MET | ≥4 weeks live shadow + real outcome labels required |
-| **Production A++** | NOT MET | Live Incognia credentials required |
+| **Production A+** | **NOT MET** | Needs ≥28d **live** shadow + ≥50 real outcome/clawback labels + ECE≤0.05; gate: `scripts/assert_production_a_plus.py` |
+| **Production A++** | **NOT MET** | Live Incognia credentials required (`incognia-live.status` = BLOCKED) |
 
-## v2 product surface
+## Honesty notes (do not blur)
 
-- API keys (SHA-256), tenant isolation, rate limits, NDJSON export
-- `/healthz`, `/readyz`, `/metrics`, compose prod profile, `deploy/k8s/`, `docs/ops/runbook-v2.md`
-- Ops dashboard (`static/index.html`) with auth + floors/shadow/econ/p histogram
-- `POST /v1/decide` unified envelope (economics never denies orders)
+1. **Technical A+ ≠ Production A+.** In-repo proof is MET. Live ops proof is not.
+2. **Synth calibration ECE** on score-path holdout is ~0.14 (target ceiling **0.15** for near-separable synth). Production outcome calibration must hit **ECE ≤ 0.05** via `fit_calibration_from_labels.py`.
+3. **`shadow_four_week_sim*` is wiring only** — citing it as production A+ is forbidden.
+4. **Cannot forge** `production-a-plus.evidence.json` with synth/red_team provenance — `assert_production_a_plus.py` exits 1.
+5. **`LOYALTY_ABUSE_AUTH_DISABLED`** is test-only.
 
-## Math (`friction_v3_0`)
+## Unlock production A+ (ops)
 
-- New typologies: `gift_card_drain`, `partner_promo_farm`, `return_to_points`, `trial_referral_farm`
-- Deeper graph similarity/density (size≥5), multi-bucket counter aliases, device-intel ATO channel
-- Score-path L2 Platt + temporal chrono holdout; outcome-cal fail-closed
-- Frozen external pack includes v3 typologies
+Follow `docs/superpowers/playbooks/2026-08-05-shadow-four-week.md`, then:
 
-## Explicit refusals
+```bash
+# after live weeks + real labels + ECE≤0.05 artifact:
+# write docs/compliance/production-a-plus.evidence.json
+python3 scripts/assert_production_a_plus.py   # must pass with MET only if evidence valid
+```
 
-- Do **not** cite synth-500k as a grade claim.
-- Do **not** cite `shadow_four_week_sim*.json` as production A+.
-- Production grades remain ops-gated.
-- `LOYALTY_ABUSE_AUTH_DISABLED` is test-only — never in production.
+Until then, `docs/compliance/production-a-plus.status` first line remains `NOT MET`.
+
+## v2 surfaces (technical)
+
+- Auth / tenant / rate limit / export; health/metrics/k8s/runbook; ops dashboard
+- `friction_v3_0` typologies + graph depth + temporal Platt fit
+- Unified `POST /v1/decide` (economics never denies orders)

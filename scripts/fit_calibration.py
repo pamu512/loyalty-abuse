@@ -188,6 +188,13 @@ def main() -> int:
     metrics = {
         "label_provenance": LABEL_PROVENANCE,
         "score_path_only": True,
+        "temporal_holdout": True,
+        "synth_ece_ceiling": ECE_TARGET,
+        "production_ece_target": 0.05,
+        "note": (
+            "Synth score-path ECE uses ceiling 0.15; production outcome labels "
+            "must meet 0.05 via fit_calibration_from_labels.py"
+        ),
         "fit_seed": args.fit_seed,
         "report_seed": args.report_seed,
         "n_fit": len(fit_s),

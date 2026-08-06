@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "loyalty-abuse/production-a-plus.evidence",
+  "title": "Production A+ evidence",
+  "type": "object",
+  "required": [
+    "claim",
+    "policy_version",
+    "shadow_start",
+    "shadow_end",
+    "n_shadow_days",
+    "n_labeled_outcomes",
+    "label_provenance_counts",
+    "calibration_ece",
+    "calibration_artifact",
+    "attestation"
+  ],
+  "properties": {
+    "claim": { "const": "production_a_plus" },
+    "policy_version": { "type": "string" },
+    "shadow_start": { "type": "string", "format": "date-time" },
+    "shadow_end": { "type": "string", "format": "date-time" },
+    "n_shadow_days": { "type": "integer", "minimum": 28 },
+    "n_labeled_outcomes": { "type": "integer", "minimum": 50 },
+    "label_provenance_counts": {
+      "type": "object",
+      "description": "Counts by provenance. Forbidden: synth, red_team, shadow_four_week_sim, adversarial."
+    },
+    "calibration_ece": { "type": "number", "maximum": 0.05 },
+    "calibration_artifact": { "type": "string" },
+    "attestation": {
+      "type": "object",
+      "required": ["not_simulation", "live_traffic", "operator"],
+      "properties": {
+        "not_simulation": { "const": true },
+        "live_traffic": { "const": true },
+        "operator": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "additionalProperties": true
+}
