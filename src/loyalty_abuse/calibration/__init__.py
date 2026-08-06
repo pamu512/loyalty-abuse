@@ -5,7 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-_CAL_PATH = Path(__file__).with_name("friction_v2_1.json")
+_CAL_PATH = Path(__file__).with_name("friction_v2_2.json")
 
 
 class CalibrationError(ValueError):
@@ -14,18 +14,25 @@ class CalibrationError(ValueError):
 
 def _validate_interactions(interactions: Any) -> None:
     if not isinstance(interactions, list):
-        raise CalibrationError("friction_v2_1 requires interactions list")
+        raise CalibrationError("calibration requires interactions list")
+    alpha_sum = 0.0
     for i, row in enumerate(interactions):
         if not isinstance(row, dict):
             raise CalibrationError(f"interactions[{i}] must be an object")
         for key in ("id", "a", "b", "alpha"):
             if key not in row:
                 raise CalibrationError(f"interactions[{i}] missing {key}")
+        alpha_sum += float(row["alpha"])
+    # Catch-power bonus must stay bounded; raw max ≈ 1 + Σα before clip.
+    if alpha_sum > 0.35 + 1e-9:
+        raise CalibrationError(
+            f"interaction alpha sum {alpha_sum} exceeds 0.35 budget"
+        )
 
 
 def _validate_soft_floors(soft_floors: Any) -> None:
     if not isinstance(soft_floors, list):
-        raise CalibrationError("friction_v2_1 requires soft_floors list")
+        raise CalibrationError("calibration requires soft_floors list")
 
 
 @lru_cache(maxsize=1)
@@ -40,10 +47,10 @@ def load_calibration() -> dict[str, Any]:
         if key not in bands:
             raise CalibrationError(f"bands missing {key}")
     if data.get("blend") != "weighted_sum":
-        raise CalibrationError("friction_v2_1 requires blend=weighted_sum")
+        raise CalibrationError("requires blend=weighted_sum")
     cost = data.get("cost")
     if not isinstance(cost, dict):
-        raise CalibrationError("friction_v2_1 requires cost block")
+        raise CalibrationError("requires cost block")
     for key in ("C_fn_per_usd", "C_fp", "miss_fraction"):
         if key not in cost:
             raise CalibrationError(f"cost missing {key}")

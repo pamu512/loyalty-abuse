@@ -8,7 +8,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Sequence
 
-_PLATT_PATH = Path(__file__).resolve().parent / "calibration" / "platt_v2_0.json"
+_PLATT_PATH = Path(__file__).resolve().parent / "calibration" / "platt_v2_2.json"
 
 
 def _sigmoid(z: float) -> float:

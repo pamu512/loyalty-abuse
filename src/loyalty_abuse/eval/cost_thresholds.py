@@ -2,7 +2,10 @@
 
 Objective (labeled, not probabilistic):
   sum_i C_fn * liability_i * label_i * miss_fraction[friction_i] + C_fp[friction_i]
-where friction_i = FrictionPolicy(**bands).action_for(score_i) (no hard_floor).
+
+Friction for a candidate band is max(score-band action, floor_min) where
+floor_min is the absolute floor raise observed from full evaluate() (soft/hard
+floors). Score-only selection previously ignored ATO/floor production behavior.
 """
 
 from __future__ import annotations
@@ -14,7 +17,9 @@ from typing import Any, Iterable, Mapping, Sequence
 
 from loyalty_abuse.eval.adversarial import GENERATORS, N_PER_SLICE
 from loyalty_abuse.features import FeatureStore
+from loyalty_abuse.floors import FRICTION_ORDER, max_friction
 from loyalty_abuse.policy import FrictionPolicy
+from loyalty_abuse.schema import FrictionAction
 from loyalty_abuse.score import evaluate
 
 Row = Mapping[str, Any]
@@ -42,6 +47,7 @@ _SLICE_ABUSE: dict[str, bool] = {
     "slow_multi_acct": True,
     "sequential_promo": True,
     "ato_known_device": True,
+    "graph_payment_ring": True,
 }
 
 _MONEY_KEYS = ("points_liability_usd", "discount_usd", "referral_bonus_usd")
@@ -49,24 +55,37 @@ _DEFAULT_LIABILITY_ABUSE = 25.0
 _DEFAULT_LIABILITY_LEGIT = 5.0
 
 
-def total_labeled_cost(
-    rows: Sequence[Row],
+def _friction_with_floors(
+    score: int,
     bands: Mapping[str, int],
-    cost: Mapping[str, Any],
-) -> float:
-    """Sum labeled loss+insult under candidate bands (hard_floor ignored)."""
+    floor_min: str | None,
+) -> FrictionAction:
     policy = FrictionPolicy(
         allow_max=int(bands["allow_max"]),
         throttle_max=int(bands["throttle_max"]),
         soft_max=int(bands["soft_max"]),
         hard_max=int(bands["hard_max"]),
     )
+    friction = policy.action_for(int(score))
+    if floor_min:
+        friction = max_friction(friction, FrictionAction(floor_min))
+    return friction
+
+
+def total_labeled_cost(
+    rows: Sequence[Row],
+    bands: Mapping[str, int],
+    cost: Mapping[str, Any],
+) -> float:
+    """Sum labeled loss+insult under candidate bands + evaluate() floor mins."""
     c_fn = float(cost["C_fn_per_usd"])
     c_fp = cost["C_fp"]
     miss = cost["miss_fraction"]
     total = 0.0
     for row in rows:
-        friction = policy.action_for(int(row["score"]))
+        friction = _friction_with_floors(
+            int(row["score"]), bands, row.get("floor_min")  # type: ignore[arg-type]
+        )
         key = friction.value
         label = 1.0 if row["label_abuse"] else 0.0
         total += c_fn * float(row["liability_usd"]) * label * float(miss[key])
@@ -149,11 +168,22 @@ def liability_for_payload(payload: Mapping[str, Any] | None, *, abuse: bool) -> 
     return _DEFAULT_LIABILITY_ABUSE if abuse else _DEFAULT_LIABILITY_LEGIT
 
 
-def _score_journey(events: list) -> int:
+def _decide_journey(events: list):
     store = FeatureStore()
     for e in events[:-1]:
         store.observe(e)
-    return int(evaluate(events[-1], store).score)
+    return evaluate(events[-1], store)
+
+
+def _floor_min_from_decision(d) -> str | None:
+    """Absolute friction floor implied by soft/hard floors (above score band)."""
+    band = str((d.features_snapshot or {}).get("band_friction") or "allow")
+    final = d.friction.value
+    if FRICTION_ORDER.index(FrictionAction(final)) > FRICTION_ORDER.index(
+        FrictionAction(band)
+    ):
+        return final
+    return None
 
 
 def build_adversarial_labeled_rows(
@@ -170,10 +200,14 @@ def build_adversarial_labeled_rows(
         for j in range(n_per_slice):
             jr = random.Random(rng.randint(0, 2**31 - 1))
             events = gen(j, jr, base)
-            score = _score_journey(events)
+            d = _decide_journey(events)
             rows.append(
                 {
-                    "score": score,
+                    "score": int(d.score),
+                    "friction": d.friction.value,
+                    "band_friction": (d.features_snapshot or {}).get("band_friction"),
+                    "floor_min": _floor_min_from_decision(d),
+                    "p_abuse": d.p_abuse,
                     "liability_usd": liability_for_payload(
                         events[-1].payload, abuse=abuse
                     ),

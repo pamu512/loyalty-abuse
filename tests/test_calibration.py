@@ -14,7 +14,7 @@ def test_weights_sum_to_one():
 
 def test_policy_version():
     cal = load_calibration()
-    assert cal["policy_version"] == "friction_v2_1"
+    assert cal["policy_version"] == "friction_v2_2"
     assert isinstance(cal["interactions"], list)
     assert isinstance(cal["soft_floors"], list)
     assert cal["blend"] == "weighted_sum"

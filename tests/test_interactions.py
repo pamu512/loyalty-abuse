@@ -16,12 +16,12 @@ def test_multi_promo_full_confidence_scores_68():
         "promo_stack": 1.0,
     }
     raw = blend_raw(weights, conf, interactions)
-    # w_multi + w_promo + α_multi_promo = 0.28 + 0.18 + 0.22
-    assert abs(raw - 0.68) < 1e-12
-    assert int(round(100.0 * clip(raw))) == 68
+    # v2_2: w_multi + w_promo + α_multi_promo = 0.28 + 0.18 + 0.0786
+    assert abs(raw - (0.28 + 0.18 + 0.0786)) < 1e-9
+    assert int(round(100.0 * clip(raw))) == 54
 
     rows = interaction_results(conf, interactions)
     ix = next(r for r in rows if r.id == "ix.multi_promo")
-    assert ix.points == 22
+    assert ix.points == 8
     assert abs(ix.confidence - 1.0) < 1e-12
-    assert sum(r.points for r in rows if r.points > 0) == 22
+    assert sum(r.points for r in rows if r.points > 0) == 8

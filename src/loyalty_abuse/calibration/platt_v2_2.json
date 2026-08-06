@@ -1,0 +1,65 @@
+{
+  "version": "platt_v2_2",
+  "method": "binning",
+  "a": 89.86687166360512,
+  "b": -8.468587784078718,
+  "fit_seed": 7,
+  "report_seed": 42,
+  "label_provenance": "synthetic red-team+chronological 2026-08-06",
+  "ece_target": 0.05,
+  "unique_fit_scores": 40,
+  "unique_report_scores": 38,
+  "platt_rejected_step": true,
+  "binning": [
+    {
+      "lo": 0.0,
+      "hi": 0.1,
+      "p": 0.018867924528301886
+    },
+    {
+      "lo": 0.1,
+      "hi": 0.2,
+      "p": 1.0
+    },
+    {
+      "lo": 0.2,
+      "hi": 0.3,
+      "p": 1.0
+    },
+    {
+      "lo": 0.3,
+      "hi": 0.4,
+      "p": 0.5666666666666667
+    },
+    {
+      "lo": 0.4,
+      "hi": 0.5,
+      "p": 1.0
+    },
+    {
+      "lo": 0.5,
+      "hi": 0.6,
+      "p": 1.0
+    },
+    {
+      "lo": 0.6,
+      "hi": 0.7,
+      "p": 1.0
+    },
+    {
+      "lo": 0.7,
+      "hi": 0.8,
+      "p": 1.0
+    },
+    {
+      "lo": 0.8,
+      "hi": 0.9,
+      "p": 1.0
+    },
+    {
+      "lo": 0.9,
+      "hi": 1.0,
+      "p": 0.5666666666666667
+    }
+  ]
+}

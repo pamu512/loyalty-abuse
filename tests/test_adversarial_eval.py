@@ -87,3 +87,4 @@ def test_slice_bounds_not_weakened():
     assert SLICE_BOUNDS["slow_multi_acct"]["bound"] >= 0.70
     assert SLICE_BOUNDS["sequential_promo"]["bound"] >= 0.50
     assert SLICE_BOUNDS["ato_known_device"]["bound"] >= 0.50
+    assert SLICE_BOUNDS["graph_payment_ring"]["bound"] >= 0.70

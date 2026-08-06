@@ -24,25 +24,25 @@ def test_multi_account_soft_or_not_max():
         "account_age_minutes": 120,
     }
     cal = load_calibration()
-    c_dev = soft_or(
-        [
-            sat(float(snap["accounts_on_device_1h"]), *sat_params("accounts_on_device_1h")),
-            sat(float(snap["accounts_on_device_24h"]), *sat_params("accounts_on_device_24h")),
-            sat(float(snap["accounts_on_device_7d"]), *sat_params("accounts_on_device_7d")),
-        ]
+    # Correlated windows → max; independent families → soft_or (v2_2).
+    c_dev = max(
+        sat(float(snap["accounts_on_device_1h"]), *sat_params("accounts_on_device_1h")),
+        sat(float(snap["accounts_on_device_24h"]), *sat_params("accounts_on_device_24h")),
+        sat(float(snap["accounts_on_device_7d"]), *sat_params("accounts_on_device_7d")),
     )
-    c_ip = soft_or(
-        [
-            sat(float(snap["accounts_on_ip_1h"]), *sat_params("accounts_on_ip_1h")),
-            sat(float(snap["accounts_on_ip_24h"]), *sat_params("accounts_on_ip_24h")),
-            sat(float(snap["accounts_on_ip_7d"]), *sat_params("accounts_on_ip_7d")),
-        ]
+    c_ip = max(
+        sat(float(snap["accounts_on_ip_1h"]), *sat_params("accounts_on_ip_1h")),
+        sat(float(snap["accounts_on_ip_24h"]), *sat_params("accounts_on_ip_24h")),
+        sat(float(snap["accounts_on_ip_7d"]), *sat_params("accounts_on_ip_7d")),
     )
     c_email = float(cal.get("email_burst_confidence") or 0.75)
-    c_graph = sat(float(snap.get("graph_cluster_size") or 0), *sat_params("graph_cluster_size"))
+    c_graph_size = sat(
+        float(snap.get("graph_cluster_size") or 0), *sat_params("graph_cluster_size")
+    )
+    c_graph = soft_or([c_graph_size, 0.0, 0.0])
     expected = soft_or([c_dev, c_ip, c_email, c_graph])
     r = multi_account.score(snap)
-    assert r.confidence == expected
+    assert abs(r.confidence - expected) < 1e-12
     assert r.confidence > max(c_dev, c_ip, c_email, c_graph)
     assert r.confidence > 0.75
 

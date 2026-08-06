@@ -15,6 +15,7 @@ from loyalty_abuse.features import FeatureStore
 from loyalty_abuse.floors import apply_soft_floors, max_friction
 from loyalty_abuse.interactions import blend_raw, interaction_results
 from loyalty_abuse.mathutil import clip
+from loyalty_abuse.points import reconcile_points
 from loyalty_abuse.policy import FrictionPolicy
 from loyalty_abuse.schema import Decision, EventEnvelope, FrictionAction, POLICY_VERSION
 from loyalty_abuse.typologies import ALL_SCORERS
@@ -44,7 +45,9 @@ def evaluate(
     raw = blend_raw(weights, conf, ix_cfg)
     score = int(round(100.0 * clip(raw)))
     active = [r for r in results if r.confidence > 0]
-    breakdown = active + [r for r in ix_rows if r.points > 0]
+    breakdown = reconcile_points(
+        active + [r for r in ix_rows if r.points > 0], score
+    )
     reasons = [code for tr in active for code in tr.reasons]
     payload = event.payload if isinstance(event.payload, dict) else {}
     if intel_signals_hard_floor(snap) or intel_signals_hard_floor(payload):

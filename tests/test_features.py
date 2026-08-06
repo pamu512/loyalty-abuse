@@ -249,7 +249,8 @@ def test_ato_known_device_sensitive_profile():
     )
     assert snap["ato_chain"] is True
     assert snap["ato_known_device"] is True
-    assert snap["force_hard_floor"] is True
+    # Known-device ATO uses soft floor (floor.soft.ato_chain), not force_hard_floor.
+    assert snap["force_hard_floor"] is False
 
 
 def test_sequential_stack_depth_across_events():

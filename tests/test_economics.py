@@ -89,7 +89,7 @@ def test_evaluate_sets_expected_fields():
         },
     )
     d = evaluate(e, store)
-    assert d.policy_version == "friction_v2_1"
+    assert d.policy_version == "friction_v2_2"
     assert d.schema_version == 2
     assert d.friction != FrictionAction.allow
     assert d.score > 0

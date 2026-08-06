@@ -27,7 +27,7 @@ DECISION_EXAMPLE = {
         {"id": "ato_redeem", "points": 40, "reasons": ["ato.login_profile_redeem_chain"]},
     ],
     "features_snapshot": {"ato_chain": True},
-    "policy_version": "friction_v2_1",
+    "policy_version": "friction_v2_2",
     "schema_version": SCHEMA_VERSION,
     "expected_loss_usd": 0.0,
     "expected_insult_usd": 0.0,

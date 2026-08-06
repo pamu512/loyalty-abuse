@@ -57,7 +57,7 @@ def _chronological_synth_rows(seed: int, n: int = 200) -> list[dict[str, Any]]:
 
 
 def _write_cal_bands(bands: dict[str, int]) -> Path:
-    path = ROOT / "src" / "loyalty_abuse" / "calibration" / "friction_v2_0.json"
+    path = ROOT / "src" / "loyalty_abuse" / "calibration" / "friction_v2_2.json"
     data = json.loads(path.read_text())
     data["bands"] = {
         "allow_max": int(bands["allow_max"]),
@@ -82,7 +82,7 @@ def main() -> int:
     p.add_argument(
         "--update-cal",
         action="store_true",
-        help="Write selected bands into friction_v2_0.json (val seed only).",
+        help="Write selected bands into friction_v2_2.json (val seed only).",
     )
     p.add_argument("--synth-n", type=int, default=200)
     p.add_argument(

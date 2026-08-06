@@ -22,7 +22,7 @@ def test_points_sum_matches_score(case):
     d = evaluate(events[-1], store)
     pts = sum(t.points for t in d.typology_breakdown)
     assert abs(pts - d.score) <= 1
-    assert d.policy_version == "friction_v2_1"
+    assert d.policy_version == "friction_v2_2"
 
 
 def test_points_sum_includes_interaction_rows():

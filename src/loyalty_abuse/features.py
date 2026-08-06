@@ -244,8 +244,11 @@ class FeatureStore:
             if isinstance(payload.get("device_intel"), dict)
             else {}
         )
+        # Classic ATO (new_device|new_geo) keeps hard floor. Known-device ATO
+        # uses typology confidence + soft floor (floor.soft.ato_chain) so score
+        # and friction stay aligned instead of score≈11 + hard_challenge + p=1.
         force_hard = (
-            ato_chain
+            (ato_chain and not ato_known_device)
             or len(redeem_5m) >= redeem_floor
             or len(signup_5m) >= signup_floor
             or intel_force_hard_floor(payload)
