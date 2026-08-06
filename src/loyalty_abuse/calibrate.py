@@ -8,7 +8,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Sequence
 
-_PLATT_PATH = Path(__file__).resolve().parent / "calibration" / "platt_v2_2.json"
+_PLATT_PATH = Path(__file__).resolve().parent / "calibration" / "platt_v2_3.json"
 
 
 def _sigmoid(z: float) -> float:
@@ -31,25 +31,30 @@ def fit_platt(
     *,
     max_iter: int = 100,
     tol: float = 1e-9,
+    l2: float = 0.5,
 ) -> tuple[float, float]:
-    """MLE logistic fit for sigmoid(a*s+b). Pure Newton steps; no sklearn."""
+    """L2-regularized logistic fit for sigmoid(a*s+b). Pure Newton; no sklearn.
+
+    ``l2`` penalizes large |a| so separable synthetic labels cannot learn a
+    step-function (a≫1) that maps nearly every positive score to p≈1.
+    """
     if len(scores) != len(labels):
         raise ValueError("scores and labels length mismatch")
     if not scores:
         raise ValueError("fit_platt requires non-empty scores")
+    if l2 < 0:
+        raise ValueError("l2 must be >= 0")
     xs = [float(s) for s in scores]
     ys = [float(int(y)) for y in labels]
-    # Prior: mild separation → a>0; intercept near 0.
     a, b = 1.0, 0.0
     for _ in range(max_iter):
-        g_a = 0.0
-        g_b = 0.0
-        h_aa = 0.0
+        g_a = -l2 * a
+        g_b = -l2 * b
+        h_aa = l2
         h_ab = 0.0
-        h_bb = 0.0
+        h_bb = l2
         for x, y in zip(xs, ys):
             p = _sigmoid(a * x + b)
-            # Clip away from 0/1 for Hessian stability.
             p = min(max(p, 1e-15), 1.0 - 1e-15)
             w = p * (1.0 - p)
             d = y - p
@@ -58,8 +63,6 @@ def fit_platt(
             h_aa += w * x * x
             h_ab += w * x
             h_bb += w
-        # Damped Newton on 2x2 Hessian of negative log-likelihood → negate grads.
-        # We ascend LL, so step solves H * delta = g with H = -Hessian_LL = observed info.
         det = h_aa * h_bb - h_ab * h_ab
         if abs(det) < 1e-18:
             break
@@ -181,14 +184,20 @@ def fit_binning(
         idx = min(int(sf * n_bins), n_bins - 1)
         counts[idx] += 1
         pos[idx] += int(y)
-    # Global prior for empty bins.
+    # Sparse bins: Beta(1,1) shrink + clamp away from {0,1}. Dense bins: empirical.
     prior = sum(int(y) for y in labels) / len(labels)
     edges: list[BinEdge] = []
     for i in range(n_bins):
         lo = i / n_bins
         hi = (i + 1) / n_bins
-        p = (pos[i] / counts[i]) if counts[i] else prior
-        edges.append((lo, hi, float(p)))
+        if counts[i] == 0:
+            p = float(prior)
+        elif counts[i] >= 25:
+            p = float(pos[i] / counts[i])
+        else:
+            p = (pos[i] + 1.0) / (counts[i] + 2.0)
+            p = min(0.98, max(0.02, float(p)))
+        edges.append((lo, hi, p))
     return edges
 
 

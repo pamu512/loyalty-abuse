@@ -22,7 +22,7 @@ def test_points_sum_matches_score(case):
     d = evaluate(events[-1], store)
     pts = sum(t.points for t in d.typology_breakdown)
     assert abs(pts - d.score) <= 1
-    assert d.policy_version == "friction_v2_2"
+    assert d.policy_version == "friction_v2_3"
 
 
 def test_points_sum_includes_interaction_rows():
@@ -54,6 +54,8 @@ def test_weighted_sum_no_max_weight_normalize():
         store.observe(e)
     d = evaluate(events[-1], store)
     ato = next(t for t in d.typology_breakdown if t.id == "ato_redeem")
-    # w=0.20, c=0.85 → points ≈ 17; without max_w, score stays near that
-    assert ato.points == 17
-    assert abs(d.score - 17) <= 1
+    # No max_weight_normalize: lone ATO cannot hit score 100.
+    w = float(load_calibration()["weights"]["ato_redeem"])
+    assert ato.points == int(round(100.0 * w * ato.confidence))
+    assert abs(d.score - ato.points) <= 1
+    assert d.score < 50

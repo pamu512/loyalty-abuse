@@ -51,12 +51,12 @@ def main() -> int:
     p.add_argument(
         "--out",
         type=Path,
-        default=ROOT / "src" / "loyalty_abuse" / "calibration" / "platt_v2_2.json",
+        default=ROOT / "src" / "loyalty_abuse" / "calibration" / "platt_v2_3.json",
     )
     p.add_argument(
         "--metrics-out",
         type=Path,
-        default=ROOT / "artifacts" / "calibration_v2_2.json",
+        default=ROOT / "artifacts" / "calibration_v2_3.json",
     )
     args = p.parse_args()
 
@@ -65,7 +65,7 @@ def main() -> int:
         args.out.write_text(
             json.dumps(
                 {
-                    "version": "platt_v2_2",
+                    "version": "platt_v2_3",
                     "method": "platt",
                     "a": 1.0,
                     "b": 0.0,
@@ -97,17 +97,21 @@ def main() -> int:
     bin_rel = reliability_bins(bin_probs, rep_y, n_bins=10)
     binning_payload = [{"lo": lo, "hi": hi, "p": p_hat} for lo, hi, p_hat in bins]
 
-    # Prefer binning when Platt is a step or worse ECE.
+    # Prefer L2 Platt; binning only if Platt is step-like or misses ECE.
     method = "platt"
     chosen_ece = platt_ece
     chosen_brier = platt_brier
-    if platt_is_step or bin_ece + 1e-12 < platt_ece or platt_ece > ECE_TARGET:
+    if platt_is_step or (platt_ece > ECE_TARGET and bin_ece <= ECE_TARGET):
+        method = "binning"
+        chosen_ece = bin_ece
+        chosen_brier = bin_brier
+    elif bin_ece + 0.01 < platt_ece and bin_ece <= ECE_TARGET:
         method = "binning"
         chosen_ece = bin_ece
         chosen_brier = bin_brier
 
     payload: dict[str, Any] = {
-        "version": "platt_v2_2",
+        "version": "platt_v2_3",
         "method": method,
         "a": a,
         "b": b,

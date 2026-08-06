@@ -25,9 +25,9 @@ def test_slow_multi_soft_floor_raises_allow_to_soft_challenge(monkeypatch):
     assert friction == FrictionAction.soft_challenge
     assert "floor.soft.slow_multi" in reasons
 
-    # evaluate: score stays band-allow (22) but soft floor raises friction
+    # evaluate: score stays band-allow but soft floor raises friction
     conf = {tid: 0.0 for tid in cal["weights"]}
-    conf["multi_account"] = 0.8
+    conf["multi_account"] = 0.70  # score≈24 at w=0.34; floor min_confidence 0.7
     monkeypatch.setattr("loyalty_abuse.score.ALL_SCORERS", _stub_scorers(conf))
 
     def fake_snapshot(_event):
@@ -49,7 +49,8 @@ def test_slow_multi_soft_floor_raises_allow_to_soft_challenge(monkeypatch):
         ip="1.1.1.1",
     )
     d = evaluate(event, FeatureStore())
-    assert d.score == 22
+    assert d.score == int(round(100.0 * float(cal["weights"]["multi_account"]) * 0.70))
+    assert d.score <= int(cal["bands"]["allow_max"])
     assert d.friction == FrictionAction.soft_challenge
     assert d.features_snapshot.get("band_friction") == "allow"
     assert "floor.soft.slow_multi" in d.reasons

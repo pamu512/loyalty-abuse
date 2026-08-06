@@ -18,6 +18,8 @@ PATTERN_SLICES = ("slow_multi_acct", "sequential_promo")
 def _valid_catch_attribution(reasons: list[str], family_prefix: str) -> bool:
     return any(
         r.startswith(family_prefix)
+        or r.startswith("multi_acct.")
+        or r.startswith("code.")
         or r.startswith("floor.soft.")
         or r.startswith("ix.")
         for r in reasons

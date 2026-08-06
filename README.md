@@ -96,15 +96,15 @@ Seeds six abuse patterns (multi-account, promo stack, referral self-deal, bot re
 
 ### Primary gate (B+ floor, still required)
 
-Adversarial suite on `friction_v2_2` (`policy_version` in artifact):
+Adversarial suite on `friction_v2_3` (`policy_version` in artifact):
 
 ```bash
-PYTHONPATH=src python3 scripts/adversarial_eval.py --seed 42 --out artifacts/adversarial_v2_2.json
+PYTHONPATH=src python3 scripts/adversarial_eval.py --seed 42 --out artifacts/adversarial_v2_3.json
 ```
 
 Exit code 0 only when all slice bounds pass (household FP allow-rate ≥ 0.85 and block-rate ≤ 0.5; device-rotation / slow-multi / sequential-promo / known-device ATO catch-rates at soft_challenge+). See `src/loyalty_abuse/eval/adversarial.py` for published bounds.
 
-**Catch-power (`friction_v2_2`):** Score blend includes published interaction terms (`ix.*` in breakdown). Soft floors (`floor.soft.*`) may raise friction without raising score — a lone typology can sit below the soft band while friction reaches `soft_challenge+` via floor predicates. Adversarial gates require pattern slices to catch honestly (typology, interaction, or soft-floor attribution; no redeem-velocity hard_floor vanity; combined pattern block-rate ≤ 0.5).
+**Catch-power (`friction_v2_3`):** Score blend includes published interaction terms (`ix.*` in breakdown). Soft floors (`floor.soft.*`) may raise friction without raising score — a lone typology can sit below the soft band while friction reaches `soft_challenge+` via floor predicates. Adversarial gates require pattern slices to catch honestly (typology, interaction, or soft-floor attribution; no redeem-velocity hard_floor vanity; combined pattern block-rate ≤ 0.5).
 
 The synthetic 500k eval (`scripts/synth_eval.py`) is **regression-only** — it must not be cited as a grade claim.
 
@@ -139,7 +139,7 @@ Exit 1 if any adversarial slice fails its bound.
 
 ### Phase 4 — Catch-power + shadow/label loop (in-repo)
 
-**Catch-power (`friction_v2_2`):** Published interaction terms (`ix.*`) on the score blend plus soft-floor predicates (`floor.soft.*`) that raise friction without raising score. `evaluate()` stores `band_friction` in `features_snapshot` (score-band action before floors) for honest ops attribution.
+**Catch-power (`friction_v2_3`):** Published interaction terms (`ix.*`) on the score blend plus soft-floor predicates (`floor.soft.*`) that raise friction without raising score. `evaluate()` stores `band_friction` in `features_snapshot` (score-band action before floors) for honest ops attribution.
 
 **Shadow/label loop:** Outcome labels join decisions; retrain gate checks held-out ECE; four-week playbook at [`docs/superpowers/playbooks/2026-08-05-shadow-four-week.md`](docs/superpowers/playbooks/2026-08-05-shadow-four-week.md); synthetic 28-day sim:
 

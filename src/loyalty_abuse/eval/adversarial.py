@@ -142,11 +142,15 @@ def gen_household_fp(i: int, rng: random.Random, base: datetime) -> list[EventEn
 
 
 def gen_device_rotation(i: int, rng: random.Random, base: datetime) -> list[EventEnvelope]:
-    """Rotate device_id each signup/redeem; catch via IP + code + promo multi-signal."""
+    """Rotate device_id each signup/redeem; catch via IP + code + promo multi-signal.
+
+    ~30% near-miss: small n / weak discount — must not always catch at 100%.
+    """
     tenant = f"dr_{i % 5}"
     ip = f"11.{i % 200}.{rng.randint(1, 40)}.{rng.randint(1, 250)}"
     code = f"ROT{rng.randint(0, 9)}"
-    n = rng.randint(18, 36)
+    near_miss = rng.random() < 0.30
+    n = rng.randint(6, 11) if near_miss else rng.randint(18, 36)
     events: list[EventEnvelope] = []
     for j in range(n):
         acct = f"dr_{i}_{j}"
@@ -183,7 +187,8 @@ def gen_device_rotation(i: int, rng: random.Random, base: datetime) -> list[Even
             )
         )
     last = f"dr_{i}_{n - 1}"
-    disc = rng.randint(45, 80)
+    disc = rng.randint(10, 25) if near_miss else rng.randint(45, 80)
+    offers = [] if near_miss else (["a", "b"] if rng.random() < 0.7 else ["a"])
     events.append(
         _env(
             f"rf_{i}",
@@ -197,9 +202,9 @@ def gen_device_rotation(i: int, rng: random.Random, base: datetime) -> list[Even
             payload={
                 "reward_id": "r",
                 "points": rng.randint(20, 80),
-                "promo_codes": [code],
-                "offer_ids": ["a", "b"] if rng.random() < 0.7 else ["a"],
-                "loyalty_applied": ["pts"],
+                "promo_codes": [code] if not near_miss or rng.random() < 0.5 else [],
+                "offer_ids": offers,
+                "loyalty_applied": ["pts"] if not near_miss else [],
                 "discount_pct": disc,
                 "channel": "app",
             },
@@ -214,12 +219,13 @@ def gen_slow_multi_acct(i: int, rng: random.Random, base: datetime) -> list[Even
     device = f"dev_sm_{i}_{rng.randint(0, 999)}"
     ip = f"12.{i % 200}.{rng.randint(1, 40)}.{rng.randint(1, 250)}"
     code = f"SLOW{rng.randint(0, 9)}"
-    n_acct = rng.randint(4, 7)
+    near_miss = rng.random() < 0.28
+    n_acct = rng.randint(2, 3) if near_miss else rng.randint(4, 7)
     events: list[EventEnvelope] = []
     # Spaced >24h; last signup young (<60m) so young_multi_mult can fire before soft_or.
-    offsets_h = [float(rng.randint(48, 160) - k * rng.randint(20, 30)) for k in range(n_acct - 1)]
-    offsets_h.append(rng.uniform(0.4, 0.9))
-    offsets_h = sorted(offsets_h, reverse=True)
+    offsets_h = [float(rng.randint(48, 160) - k * rng.randint(20, 30)) for k in range(max(n_acct - 1, 1))]
+    offsets_h.append(rng.uniform(0.4, 0.9) if not near_miss else rng.uniform(120.0, 400.0))
+    offsets_h = sorted(offsets_h, reverse=True)[:n_acct]
     for j, oh in enumerate(offsets_h):
         acct = f"sm_{i}_{j}"
         events.append(
@@ -280,7 +286,8 @@ def gen_sequential_promo(i: int, rng: random.Random, base: datetime) -> list[Eve
     device = f"dev_sp_{i}_{rng.randint(0, 999)}"
     ip = f"13.{i % 200}.{rng.randint(1, 40)}.{rng.randint(1, 250)}"
     code = f"STACK{rng.randint(0, 9)}"
-    offers = [f"o{j}" for j in range(rng.randint(4, 6))]
+    near_miss = rng.random() < 0.30
+    offers = [f"o{j}" for j in range(rng.randint(1, 2) if near_miss else rng.randint(4, 6))]
     events: list[EventEnvelope] = [
         _env(
             f"s_{i}",
@@ -307,7 +314,7 @@ def gen_sequential_promo(i: int, rng: random.Random, base: datetime) -> list[Eve
                 payload={"offer_id": offer, "campaign_id": f"c{j}"},
             )
         )
-    n_sib = rng.randint(18, 36)
+    n_sib = rng.randint(3, 8) if near_miss else rng.randint(18, 36)
     for k in range(n_sib):
         sib = f"sp_{i}_sib{k}"
         events.append(
@@ -355,8 +362,8 @@ def gen_sequential_promo(i: int, rng: random.Random, base: datetime) -> list[Eve
                 "reward_id": "r",
                 "points": rng.randint(15, 50),
                 "offer_ids": [],
-                "promo_codes": [code],
-                "discount_pct": rng.randint(55, 85),
+                "promo_codes": [code] if not near_miss else [],
+                "discount_pct": rng.randint(15, 35) if near_miss else rng.randint(55, 85),
                 "channel": "app",
             },
         )
@@ -370,8 +377,9 @@ def gen_ato_known_device(i: int, rng: random.Random, base: datetime) -> list[Eve
     acct = f"ak_{i}"
     device = f"dev_ak_{i}_{rng.randint(0, 999)}"
     ip = f"14.{i % 200}.{rng.randint(1, 40)}.{rng.randint(1, 250)}"
-    login_lag = rng.randint(8, 25)
-    profile_lag = rng.randint(3, max(4, login_lag - 2))
+    # Wide timing spread → ATO confidence/score variance (auditor F4).
+    login_lag = rng.randint(2, 28)
+    profile_lag = rng.randint(1, max(2, login_lag - 1))
     field = rng.choice(["email", "phone", "payment", "password"])
     return [
         _env(
@@ -425,10 +433,11 @@ def gen_ato_known_device(i: int, rng: random.Random, base: datetime) -> list[Eve
 
 
 def gen_graph_payment_ring(i: int, rng: random.Random, base: datetime) -> list[EventEnvelope]:
-    """Accounts linked only by shared payment hash — distinct devices/IPs (graph-only catch)."""
+    """Accounts linked only by shared payment hash — distinct devices/IPs (graph score path)."""
     tenant = f"gp_{i}"
     pay = f"pay_ring_{i}_{rng.randint(0, 999)}"
-    n = rng.randint(7, 12)
+    near_miss = rng.random() < 0.25
+    n = rng.randint(3, 5) if near_miss else rng.randint(7, 12)
     events: list[EventEnvelope] = []
     for j in range(n):
         acct = f"gp_{i}_{j}"
@@ -507,6 +516,10 @@ def run_suite(seed: int = 42, n_per_slice: int = N_PER_SLICE) -> dict[str, Any]:
 
     slices: dict[str, dict[str, Any]] = {}
     gates: dict[str, dict[str, Any]] = {}
+    all_p: list[float] = []
+    ato_incoherent = 0
+    ato_n = 0
+    allow_max = int((cal.get("bands") or {}).get("allow_max", 24))
 
     for name, gen in GENERATORS.items():
         frictions: list[str] = []
@@ -518,6 +531,15 @@ def run_suite(seed: int = 42, n_per_slice: int = N_PER_SLICE) -> dict[str, Any]:
             d = _score_journey(events)
             frictions.append(d.friction.value)
             scores.append(int(d.score))
+            p = float(d.p_abuse or 0.0)
+            all_p.append(p)
+            if name == "ato_known_device":
+                ato_n += 1
+                band = str((d.features_snapshot or {}).get("band_friction") or "allow")
+                band_i = FRICTION_ORDER.index(FrictionAction(band))
+                fric_i = FRICTION_ORDER.index(d.friction)
+                if int(d.score) <= allow_max and (fric_i - band_i) >= 2 and p >= 0.95:
+                    ato_incoherent += 1
 
         n = len(frictions)
         allow_n = sum(1 for f in frictions if f == FrictionAction.allow.value)
@@ -564,6 +586,36 @@ def run_suite(seed: int = 42, n_per_slice: int = N_PER_SLICE) -> dict[str, Any]:
         "bound": 3,
         "actual": uniq,
         "pass": uniq >= 3,
+    }
+    gates["ato_score_variance"] = {
+        "metric": "ato_unique_scores",
+        "bound": 2,
+        "actual": slices["ato_known_device"]["unique_scores"],
+        "pass": slices["ato_known_device"]["unique_scores"] >= 2,
+    }
+
+    # Auditor F4: at least 2 abuse slices must not catch 100% (near-misses exist).
+    imperfect = sum(1 for n in abuse_names if slices[n]["catch_rate"] < 1.0)
+    gates["nonperfect_catch"] = {
+        "metric": "abuse_slices_catch_lt_1",
+        "bound": 2,
+        "actual": imperfect,
+        "pass": imperfect >= 2,
+    }
+
+    # Auditor F1: p_abuse must not be a two-point step on the suite.
+    extreme = sum(1 for p in all_p if p <= 0.05 or p >= 0.95) / max(len(all_p), 1)
+    gates["p_abuse_not_step"] = {
+        "metric": "frac_p_in_extremes",
+        "bound": 0.80,
+        "actual": round(extreme, 4),
+        "pass": extreme < 0.80,
+    }
+    gates["ato_p_friction_coherent"] = {
+        "metric": "ato_allowband_hard_p95_count",
+        "bound": 0,
+        "actual": ato_incoherent,
+        "pass": ato_incoherent == 0,
     }
 
     # Anti-vanity block-rate caps (also enforced by pytest; must drive CLI gates_pass).

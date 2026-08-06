@@ -17,6 +17,7 @@ from loyalty_abuse.interactions import blend_raw, interaction_results
 from loyalty_abuse.mathutil import clip
 from loyalty_abuse.points import reconcile_points
 from loyalty_abuse.policy import FrictionPolicy
+from loyalty_abuse.probability import combine_score_and_friction_p
 from loyalty_abuse.schema import Decision, EventEnvelope, FrictionAction, POLICY_VERSION
 from loyalty_abuse.typologies import ALL_SCORERS
 
@@ -66,7 +67,11 @@ def evaluate(
     if snap.get("force_hard_floor"):
         friction = max_friction(friction, FrictionAction.hard_challenge)
     reasons.extend(floor_reasons)
-    p_abuse = predict_calibrated(score / 100.0)
+    p_score = predict_calibrated(score / 100.0)
+    p_abuse = combine_score_and_friction_p(
+        p_score, friction, cal.get("friction_p_floor")
+    )
+    snap["p_score"] = p_score
     loss_usd, insult_usd = expected_costs(
         liability_usd(event), p_abuse, friction, cost=cal.get("cost")
     )

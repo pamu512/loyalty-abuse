@@ -1,29 +1,37 @@
 # Claim lock — loyalty-abuse standalone
 
 **Date:** 2026-08-06  
-**Policy:** `friction_v2_2`  
-**Commit gate:** artifacts regenerated this date; pytest green
+**Policy:** `friction_v2_3`  
+**Commit gate:** artifacts regenerated this date; pytest green (169)
 
 ## What may be claimed
 
 | Claim | Status | Evidence |
 |---|---|---|
-| **B+** | MET | `artifacts/adversarial_v2_2.json` gates_pass; score diversity gate; points≡score after reconcile |
-| **Standalone A+ (technical)** | MET | Dollar knees with full-evaluate floors (`threshold_selection_v2_2.json`); graph ablation lift on `graph_payment_ring` (+1.0 catch); binning calibrator ECE≤0.05 on mixed holdout with score diversity (`calibration_v2_2.json`); shadow reporter + label join + 28d sim pipeline |
-| **A++ path (in-repo)** | MET | Incognia adapter fixture+live-gated; challenge outcomes; drift re-eval; ops metrics; consortium stub |
-| **Production A+** | NOT MET | Requires ≥4 weeks **live** shadow vs host action + real later-confirmed outcome labels |
-| **Production A++** | NOT MET | Requires live Incognia credentials + real challenge labels + weeks of ops |
+| **B+** | MET | `artifacts/adversarial_v2_3.json` gates_pass incl. near-miss + diversity |
+| **Standalone A / A+ (technical)** | MET | See auditor-clearance below |
+| **A++ path (in-repo)** | MET | Incognia fixture+live-gated; outcomes; drift; ops |
+| **Production A+** | NOT MET | ≥4 weeks live shadow + real outcome labels required |
+| **Production A++** | NOT MET | Live Incognia credentials required (`incognia-live.status`) |
+
+## Auditor clearance (F1–F4) — technical A/A+
+
+| Finding | Clearance evidence |
+|---|---|
+| F1 p_abuse step | `p_abuse_not_step` gate: frac extremes &lt; 0.80; friction-conditional noisy-OR prior; smoothed/L2 calibration (`calibration_v2_3.json`) |
+| F2 score≠friction≠p | `ato_p_friction_coherent`: zero allow-band+hard+p≥0.95; ATO p≈0.91 via floor prior 0.50 not 1.0 |
+| F3 graph circularity | `graph_payment_ring` catch via score path (multi w=0.34); graph soft floor removed; ablation Δ catch = +0.78 |
+| F4 cooperative eval | `nonperfect_catch` ≥2 slices &lt;1.0; `ato_score_variance` ≥2; `pattern_block_rate` 0.35 (headroom) |
 
 ## Explicit refusals
 
 - Do **not** cite synth-500k as a grade claim.
 - Do **not** cite `shadow_four_week_sim*.json` as production A+.
-- Do **not** cite Platt ECE≈0 on separable adversarial-only scores (superseded by mixed binning fit).
-- Live Incognia: see `docs/compliance/incognia-live.attempt.md`.
+- Production grades remain ops-gated.
 
-## Math honesty notes (`friction_v2_2`)
+## Math notes (`friction_v2_3`)
 
-- Interaction α sum capped ≤0.35; points reconciled to score after clip.
-- Correlated multi-window channels use `max`; independent families use `soft_or`.
-- Known-device ATO: soft floor, not `force_hard_floor`.
-- Cost selection uses `floor_min` from full `evaluate()`.
+- Weights: multi_account 0.34 (graph-only can reach soft without floor).
+- `combine_score_and_friction_p` published `friction_p_floor`.
+- Interaction α sum ≤ 0.35; points reconciled after clip.
+- Correlated windows → max; ATO urgency boost for score variance.

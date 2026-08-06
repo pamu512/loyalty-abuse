@@ -20,7 +20,9 @@ sys.path.insert(0, str(ROOT / "src"))
 from loyalty_abuse.calibrate import (  # noqa: E402
     brier,
     ece,
+    fit_binning,
     fit_platt,
+    predict_binning,
     predict_platt,
 )
 
@@ -90,18 +92,33 @@ def retrain_from_rows(
     fit_s, fit_y = _scores_labels(train)
     rep_s, rep_y = _scores_labels(report)
 
-    a, b = fit_platt(fit_s, fit_y)
-    probs = [predict_platt(s, a, b) for s in rep_s]
-    report_ece = ece(probs, rep_y, n_bins=10)
-    report_brier = brier(probs, rep_y)
+    a, b = fit_platt(fit_s, fit_y, l2=0.1)
+    platt_probs = [predict_platt(s, a, b) for s in rep_s]
+    platt_ece = ece(platt_probs, rep_y, n_bins=10)
+    platt_brier = brier(platt_probs, rep_y)
+
+    bins = fit_binning(fit_s, fit_y, n_bins=10)
+    bin_probs = [predict_binning(s, bins) for s in rep_s]
+    bin_ece = ece(bin_probs, rep_y, n_bins=10)
+    bin_brier = brier(bin_probs, rep_y)
+
+    if bin_ece + 1e-12 < platt_ece:
+        method = "binning"
+        report_ece, report_brier = bin_ece, bin_brier
+        binning = [{"lo": lo, "hi": hi, "p": p} for lo, hi, p in bins]
+    else:
+        method = "platt"
+        report_ece, report_brier = platt_ece, platt_brier
+        binning = None
 
     meets = report_ece <= ece_threshold
     should_write = meets or force
 
     return {
-        "method": "platt",
+        "method": method,
         "a": a,
         "b": b,
+        "binning": binning,
         "n_train": len(train),
         "n_report": len(report),
         "train_end": train_end,
@@ -118,7 +135,7 @@ def retrain_from_rows(
 def build_candidate_payload(result: dict[str, Any]) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "version": "platt_candidate",
-        "method": "platt",
+        "method": result.get("method") or "platt",
         "a": result["a"],
         "b": result["b"],
         "n_train": result["n_train"],
@@ -129,6 +146,8 @@ def build_candidate_payload(result: dict[str, Any]) -> dict[str, Any]:
         "meets_ece_target": result["meets_ece_target"],
         "force": result["force"],
     }
+    if result.get("binning"):
+        payload["binning"] = result["binning"]
     if result["train_end"] is not None:
         payload["train_end"] = result["train_end"]
     else:

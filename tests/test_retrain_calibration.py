@@ -40,20 +40,24 @@ def _row(
 
 
 def _well_calibrated_rows(n_per_bin: int = 40) -> list[dict]:
+    """Interleave scores in time so train/report splits keep the same mixture."""
     rows: list[dict] = []
     i = 0
-    for score, label in (
+    catalog = (
         (10, False),
         (30, False),
         (50, True),
         (70, True),
         (90, True),
-    ):
-        for j in range(n_per_bin):
+    )
+    for j in range(n_per_bin):
+        for score, label in catalog:
+            day = 1 + (i // 48)
+            hour = i % 24
             rows.append(
                 _row(
                     decision_id=f"good_{i}",
-                    ts=f"2026-08-{1 + i // 50:02d}T{(i % 24):02d}:00:00Z",
+                    ts=f"2026-08-{day:02d}T{hour:02d}:{(i % 60):02d}:00Z",
                     score=score,
                     label_abuse=label,
                 )
@@ -179,7 +183,7 @@ def test_good_ece_writes_candidate(tmp_path, monkeypatch):
     )
     assert main() == 0
     payload = json.loads(out.read_text())
-    assert payload["method"] == "platt"
+    assert payload["method"] in ("platt", "binning")
     assert payload["meets_ece_target"] is True
     assert payload["force"] is False
     assert "a" in payload and "b" in payload
