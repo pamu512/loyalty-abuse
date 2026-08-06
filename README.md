@@ -12,6 +12,23 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
+## Loyalty economics multi-gate
+
+Program LTV / loyalty-ratio gates (`dispatch` / `redeem` / `order`) live here — not in Tarka.
+
+- Engine: [`src/loyalty_abuse/multi_gate.py`](src/loyalty_abuse/multi_gate.py) (`evaluate_loyalty_economics`)
+- Warehouse pack: [`src/loyalty_abuse/warehouse.py`](src/loyalty_abuse/warehouse.py)
+- Config example: [`contracts/loyalty_program_config.example.json`](contracts/loyalty_program_config.example.json)
+- Prerequisites: [`docs/guides/loyalty-economics-prerequisites.md`](docs/guides/loyalty-economics-prerequisites.md)
+- Design: [`docs/superpowers/specs/2026-08-06-loyalty-economics-multi-gate-design.md`](docs/superpowers/specs/2026-08-06-loyalty-economics-multi-gate-design.md)
+
+```bash
+.venv/bin/python -m pytest tests/test_multi_gate.py -q
+.venv/bin/python scripts/loyalty_economics_feed_smoke.py
+```
+
+Note: [`src/loyalty_abuse/economics.py`](src/loyalty_abuse/economics.py) is decision liability / insult USD — different module.
+
 ## In-process library
 
 Score an event without HTTP — persistence and audit are your responsibility:
