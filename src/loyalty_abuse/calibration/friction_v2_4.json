@@ -1,0 +1,179 @@
+{
+  "policy_version": "friction_v2_4",
+  "blend": "weighted_sum",
+  "weights": {
+    "ato_redeem": 0.18,
+    "multi_account": 0.34,
+    "bot_redeem": 0.12,
+    "referral_self_deal": 0.08,
+    "code_leak": 0.14,
+    "promo_stack": 0.14
+  },
+  "bands": {
+    "allow_max": 24,
+    "throttle_max": 28,
+    "soft_max": 48,
+    "hard_max": 68
+  },
+  "sat": {
+    "accounts_on_device_1h": {
+      "a": 2,
+      "b": 4
+    },
+    "accounts_on_device_24h": {
+      "a": 2,
+      "b": 5
+    },
+    "accounts_on_device_7d": {
+      "a": 2,
+      "b": 5
+    },
+    "accounts_on_ip_1h": {
+      "a": 3,
+      "b": 8
+    },
+    "accounts_on_ip_24h": {
+      "a": 3,
+      "b": 10
+    },
+    "accounts_on_ip_7d": {
+      "a": 5,
+      "b": 20
+    },
+    "redeem_count_5m": {
+      "a": 4,
+      "b": 16
+    },
+    "signup_count_5m": {
+      "a": 3,
+      "b": 12
+    },
+    "code_unique_users_1h": {
+      "a": 8,
+      "b": 25
+    },
+    "code_unique_users_24h": {
+      "a": 15,
+      "b": 50
+    },
+    "code_unique_users_7d": {
+      "a": 25,
+      "b": 80
+    },
+    "stack_depth": {
+      "a": 2,
+      "b": 5
+    },
+    "discount_depth": {
+      "a": 30,
+      "b": 70
+    },
+    "graph_cluster_size": {
+      "a": 3,
+      "b": 8
+    }
+  },
+  "hard_floor": {
+    "redeem_5m": 20,
+    "signup_5m": 15
+  },
+  "young_account_minutes": 60,
+  "young_bot_mult": 1.15,
+  "young_multi_mult": 1.1,
+  "ato_confidence": 0.85,
+  "ato_known_device_confidence": 0.58,
+  "email_burst_confidence": 0.75,
+  "referral_shared_device_c": 0.9,
+  "referral_shared_payment_c": 0.85,
+  "referral_both_c": 0.95,
+  "cost": {
+    "C_fn_per_usd": 1.0,
+    "C_fp": {
+      "allow": 0.0,
+      "throttle": 0.05,
+      "soft_challenge": 0.25,
+      "hard_challenge": 0.75,
+      "block": 1.5
+    },
+    "miss_fraction": {
+      "allow": 1.0,
+      "throttle": 0.85,
+      "soft_challenge": 0.45,
+      "hard_challenge": 0.15,
+      "block": 0.0
+    }
+  },
+  "interactions": [
+    {
+      "id": "ix.multi_promo",
+      "a": "multi_account",
+      "b": "promo_stack",
+      "alpha": 0.0786
+    },
+    {
+      "id": "ix.multi_code",
+      "a": "multi_account",
+      "b": "code_leak",
+      "alpha": 0.0643
+    },
+    {
+      "id": "ix.bot_multi",
+      "a": "bot_redeem",
+      "b": "multi_account",
+      "alpha": 0.0536
+    },
+    {
+      "id": "ix.promo_code",
+      "a": "promo_stack",
+      "b": "code_leak",
+      "alpha": 0.0536
+    }
+  ],
+  "soft_floors": [
+    {
+      "id": "slow_multi",
+      "typology": "multi_account",
+      "min_confidence": 0.7,
+      "feature": "accounts_on_device_7d",
+      "min_feature": 4,
+      "min_friction": "soft_challenge",
+      "reason": "floor.soft.slow_multi"
+    },
+    {
+      "id": "promo_stack",
+      "typology": "promo_stack",
+      "min_confidence": 0.6,
+      "feature": "stack_depth",
+      "min_feature": 4,
+      "min_friction": "soft_challenge",
+      "reason": "floor.soft.promo_stack"
+    },
+    {
+      "id": "code_leak",
+      "typology": "code_leak",
+      "min_confidence": 0.7,
+      "feature": "code_unique_users_24h",
+      "min_feature": 20,
+      "min_friction": "soft_challenge",
+      "reason": "floor.soft.code_leak"
+    },
+    {
+      "id": "ato_chain",
+      "typology": "ato_redeem",
+      "min_confidence": 0.5,
+      "feature": null,
+      "min_feature": null,
+      "min_friction": "hard_challenge",
+      "reason": "floor.soft.ato_chain"
+    }
+  ],
+  "ato_urgency_boost": 0.25,
+  "friction_p_floor": {
+    "allow": 0.0,
+    "throttle": 0.08,
+    "soft_challenge": 0.22,
+    "hard_challenge": 0.38,
+    "block": 0.55
+  },
+  "p_abuse_cap": 0.97
+}

@@ -69,7 +69,10 @@ def evaluate(
     reasons.extend(floor_reasons)
     p_score = predict_calibrated(score / 100.0)
     p_abuse = combine_score_and_friction_p(
-        p_score, friction, cal.get("friction_p_floor")
+        p_score,
+        friction,
+        cal.get("friction_p_floor"),
+        p_abuse_cap=float(cal.get("p_abuse_cap", 0.97)),
     )
     snap["p_score"] = p_score
     loss_usd, insult_usd = expected_costs(

@@ -1,0 +1,17 @@
+{
+  "version": "platt_v2_4",
+  "method": "platt",
+  "a": 9.283926218226295,
+  "b": -1.7980361743086515,
+  "l2": 1.0,
+  "fit_seed": 7,
+  "report_seed": 42,
+  "label_provenance": "synthetic red-team+chronological score-path-only 2026-08-06",
+  "score_path_only": true,
+  "ece_target": 0.15,
+  "unique_fit_scores": 36,
+  "unique_report_scores": 37,
+  "platt_rejected_step": false,
+  "n_fit_score_path": 509,
+  "n_report_score_path": 510
+}

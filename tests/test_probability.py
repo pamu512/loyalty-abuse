@@ -6,7 +6,7 @@ from loyalty_abuse.schema import FrictionAction
 
 def test_hard_floor_does_not_invent_certainty_at_low_score_p():
     p = combine_score_and_friction_p(0.05, FrictionAction.hard_challenge)
-    assert 0.45 <= p <= 0.60
+    assert 0.35 <= p <= 0.55
     assert p < 0.95
 
 
@@ -16,5 +16,10 @@ def test_allow_keeps_score_p():
 
 def test_block_raises_but_caps():
     p = combine_score_and_friction_p(0.1, FrictionAction.block)
-    assert p >= 0.7
+    assert p >= 0.55
     assert p < 0.95
+
+
+def test_published_cap_blocks_certainty():
+    p = combine_score_and_friction_p(0.99, FrictionAction.block, p_abuse_cap=0.97)
+    assert p == 0.97

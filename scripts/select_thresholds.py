@@ -30,6 +30,8 @@ import synth_eval  # noqa: E402
 
 def _chronological_synth_rows(seed: int, n: int = 200) -> list[dict[str, Any]]:
     """Report-only chronological synth window (never used to select knees)."""
+    from loyalty_abuse.eval.cost_thresholds import _floor_min_from_decision
+
     rng = random.Random(seed)
     base = datetime(2026, 8, 1, 0, 0, 0, tzinfo=timezone.utc)
     labels = synth_eval._alloc(n, rng)
@@ -51,13 +53,15 @@ def _chronological_synth_rows(seed: int, n: int = 200) -> list[dict[str, Any]]:
                 "label_abuse": abuse,
                 "slice": label,
                 "source": "chronological_synth",
+                "band_friction": (d.features_snapshot or {}).get("band_friction"),
+                "floor_min": _floor_min_from_decision(d),
             }
         )
     return rows
 
 
 def _write_cal_bands(bands: dict[str, int]) -> Path:
-    path = ROOT / "src" / "loyalty_abuse" / "calibration" / "friction_v2_3.json"
+    path = ROOT / "src" / "loyalty_abuse" / "calibration" / "friction_v2_4.json"
     data = json.loads(path.read_text())
     data["bands"] = {
         "allow_max": int(bands["allow_max"]),
@@ -82,7 +86,7 @@ def main() -> int:
     p.add_argument(
         "--update-cal",
         action="store_true",
-        help="Write selected bands into friction_v2_3.json (val seed only).",
+        help="Write selected bands into friction_v2_4.json (val seed only).",
     )
     p.add_argument("--synth-n", type=int, default=200)
     p.add_argument(

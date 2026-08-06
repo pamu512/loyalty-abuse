@@ -8,7 +8,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Sequence
 
-_PLATT_PATH = Path(__file__).resolve().parent / "calibration" / "platt_v2_3.json"
+_PLATT_PATH = Path(__file__).resolve().parent / "calibration" / "platt_v2_4.json"
 
 
 def _sigmoid(z: float) -> float:
@@ -193,10 +193,11 @@ def fit_binning(
         if counts[i] == 0:
             p = float(prior)
         elif counts[i] >= 25:
-            p = float(pos[i] / counts[i])
+            # Dense bins still clamp away from {0,1} — empirical 1.0 is theater.
+            p = min(0.95, max(0.05, float(pos[i] / counts[i])))
         else:
             p = (pos[i] + 1.0) / (counts[i] + 2.0)
-            p = min(0.98, max(0.02, float(p)))
+            p = min(0.95, max(0.05, float(p)))
         edges.append((lo, hi, p))
     return edges
 

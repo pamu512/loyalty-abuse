@@ -607,9 +607,9 @@ def run_suite(seed: int = 42, n_per_slice: int = N_PER_SLICE) -> dict[str, Any]:
     extreme = sum(1 for p in all_p if p <= 0.05 or p >= 0.95) / max(len(all_p), 1)
     gates["p_abuse_not_step"] = {
         "metric": "frac_p_in_extremes",
-        "bound": 0.80,
+        "bound": 0.50,
         "actual": round(extreme, 4),
-        "pass": extreme < 0.80,
+        "pass": extreme < 0.50,
     }
     gates["ato_p_friction_coherent"] = {
         "metric": "ato_allowband_hard_p95_count",
