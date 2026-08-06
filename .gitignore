@@ -4,3 +4,7 @@ __pycache__/
 .superpowers/
 *.db
 artifacts/
+
+# Internal letter-grade ratings / claim lock (keep private)
+private/*
+!private/README.md

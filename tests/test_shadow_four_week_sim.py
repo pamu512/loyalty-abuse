@@ -27,7 +27,7 @@ def test_four_week_sim_emits_artifact(tmp_path):
     assert 0.0 <= report["recall"] <= 1.0
     assert 0.0 <= report["insult_proxy"] <= 1.0
     assert BANNER in report["banner"]
-    assert "NOT PRODUCTION A+" in report["banner"]
+    assert "NOT LIVE SHADOW READINESS" in report["banner"]
     assert len(report["by_week"]) == 4
     assert report["pipeline"]["decisions"] == report["scored"]
     assert report["pipeline"]["label_rows"] >= 0
@@ -52,4 +52,4 @@ def test_four_week_sim_cli_exits_zero(tmp_path):
     )
     assert proc.returncode == 0, proc.stderr
     assert out.is_file()
-    assert "NOT PRODUCTION A+" in proc.stdout
+    assert "NOT LIVE SHADOW READINESS" in proc.stdout

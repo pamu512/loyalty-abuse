@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI for the adversarial eval suite (primary B+ proof)."""
+"""CLI for the adversarial eval suite (primary adversarial suite proof)."""
 from __future__ import annotations
 
 import argparse

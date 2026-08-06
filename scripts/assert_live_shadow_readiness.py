@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""Fail-closed gate for production A+ / A++ claims.
+"""Fail-closed gate for live shadow / production readiness claims.
 
-Production A+ requires evidence JSON with live shadow provenance — never synth,
-never shadow_four_week_sim. This script refuses MET unless the evidence file
-passes schema + provenance checks AND status files agree.
+Requires evidence JSON with live shadow provenance — never synth,
+never shadow_four_week_sim. Refuses MET unless evidence passes checks
+AND status files agree.
+
+Letter-grade ratings are private (`private/CLAIM_LOCK.md`); this script
+only validates operational readiness evidence.
 
 Exit codes:
   0 — status correctly NOT MET, or MET with valid evidence
-  1 — MET claimed without valid evidence (theater)
+  1 — MET claimed without valid evidence
   2 — status/evidence inconsistency
 """
 
@@ -15,7 +18,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -37,6 +39,15 @@ REQUIRED_PROVENANCE = frozenset(
     {"challenge_failed", "challenge_abandoned", "clawback", "live_ops_confirmed"}
 )
 
+DEFAULT_STATUS_CANDIDATES = (
+    ROOT / "private" / "live-shadow-readiness.status",
+    ROOT / "docs" / "compliance" / "live-shadow-readiness.status",
+)
+DEFAULT_EVIDENCE_CANDIDATES = (
+    ROOT / "private" / "live-shadow-readiness.evidence.json",
+    ROOT / "docs" / "compliance" / "live-shadow-readiness.evidence.json",
+)
+
 
 def _parse_status_line(text: str) -> tuple[str, str]:
     first = text.strip().splitlines()[0] if text.strip() else ""
@@ -49,6 +60,13 @@ def _parse_status_line(text: str) -> tuple[str, str]:
     return "UNKNOWN", first
 
 
+def _first_existing(paths: tuple[Path, ...]) -> Path | None:
+    for p in paths:
+        if p.is_file():
+            return p
+    return None
+
+
 def _load_evidence(path: Path) -> dict[str, Any]:
     data = json.loads(path.read_text())
     if not isinstance(data, dict):
@@ -56,7 +74,7 @@ def _load_evidence(path: Path) -> dict[str, Any]:
     return data
 
 
-def validate_production_a_plus_evidence(evidence: dict[str, Any]) -> list[str]:
+def validate_live_shadow_evidence(evidence: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     for key in (
         "claim",
@@ -73,8 +91,8 @@ def validate_production_a_plus_evidence(evidence: dict[str, Any]) -> list[str]:
         if key not in evidence:
             errors.append(f"missing field: {key}")
 
-    if evidence.get("claim") != "production_a_plus":
-        errors.append("claim must be production_a_plus")
+    if evidence.get("claim") != "live_shadow_readiness":
+        errors.append("claim must be live_shadow_readiness")
 
     try:
         days = int(evidence.get("n_shadow_days") or 0)
@@ -122,7 +140,6 @@ def validate_production_a_plus_evidence(evidence: dict[str, Any]) -> list[str]:
         if not att.get("operator"):
             errors.append("attestation.operator required")
 
-    # Date span check
     try:
         start = datetime.fromisoformat(str(evidence["shadow_start"]).replace("Z", "+00:00"))
         end = datetime.fromisoformat(str(evidence["shadow_end"]).replace("Z", "+00:00"))
@@ -139,38 +156,34 @@ def validate_production_a_plus_evidence(evidence: dict[str, Any]) -> list[str]:
 
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument(
-        "--status",
-        type=Path,
-        default=ROOT / "docs" / "compliance" / "production-a-plus.status",
-    )
-    p.add_argument(
-        "--evidence",
-        type=Path,
-        default=ROOT / "docs" / "compliance" / "production-a-plus.evidence.json",
-    )
-    p.add_argument(
-        "--incognia-status",
-        type=Path,
-        default=ROOT / "docs" / "compliance" / "incognia-live.status",
-    )
+    p.add_argument("--status", type=Path, default=None)
+    p.add_argument("--evidence", type=Path, default=None)
     args = p.parse_args()
 
-    status_text = args.status.read_text() if args.status.is_file() else "NOT MET — missing file"
+    status_path = args.status or _first_existing(DEFAULT_STATUS_CANDIDATES)
+    evidence_path = args.evidence or _first_existing(DEFAULT_EVIDENCE_CANDIDATES)
+
+    if status_path is None:
+        status_text = "NOT MET — missing status file (ratings private; see private/README.md)"
+        status_path = DEFAULT_STATUS_CANDIDATES[0]
+    else:
+        status_text = status_path.read_text()
+
     state, line = _parse_status_line(status_text)
 
     report: dict[str, Any] = {
-        "production_a_plus_status_line": line,
+        "status_path": str(status_path),
+        "status_line": line,
         "parsed_state": state,
-        "evidence_path": str(args.evidence),
+        "evidence_path": str(evidence_path) if evidence_path else None,
         "errors": [],
-        "may_claim_production_a_plus": False,
+        "may_claim_live_shadow_readiness": False,
     }
 
     if state == "NOT MET":
-        report["may_claim_production_a_plus"] = False
+        report["may_claim_live_shadow_readiness"] = False
         report["ok"] = True
-        report["note"] = "honest: production A+ correctly not claimed"
+        report["note"] = "honest: live shadow readiness correctly not claimed"
         print(json.dumps(report, indent=2))
         return 0
 
@@ -180,27 +193,26 @@ def main() -> int:
         print(json.dumps(report, indent=2))
         return 2
 
-    # MET claimed — evidence must exist and pass.
-    if not args.evidence.is_file():
+    if evidence_path is None or not evidence_path.is_file():
         report["errors"].append("MET claimed but evidence file missing")
         report["ok"] = False
         print(json.dumps(report, indent=2))
         return 1
 
     try:
-        evidence = _load_evidence(args.evidence)
-        errs = validate_production_a_plus_evidence(evidence)
+        evidence = _load_evidence(evidence_path)
+        errs = validate_live_shadow_evidence(evidence)
     except Exception as exc:
         errs = [str(exc)]
     report["errors"] = errs
     if errs:
         report["ok"] = False
-        report["may_claim_production_a_plus"] = False
+        report["may_claim_live_shadow_readiness"] = False
         print(json.dumps(report, indent=2))
         return 1
 
     report["ok"] = True
-    report["may_claim_production_a_plus"] = True
+    report["may_claim_live_shadow_readiness"] = True
     print(json.dumps(report, indent=2))
     return 0
 

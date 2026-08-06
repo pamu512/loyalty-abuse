@@ -1,7 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "loyalty-abuse/production-a-plus.evidence",
-  "title": "Production A+ evidence",
+  "$id": "loyalty-abuse/live-shadow-readiness.evidence",
+  "title": "Live shadow readiness evidence",
+  "description": "Operational readiness packet. Store under private/ when filled; letter grades stay private.",
   "type": "object",
   "required": [
     "claim",
@@ -16,7 +17,7 @@
     "attestation"
   ],
   "properties": {
-    "claim": { "const": "production_a_plus" },
+    "claim": { "const": "live_shadow_readiness" },
     "policy_version": { "type": "string" },
     "shadow_start": { "type": "string", "format": "date-time" },
     "shadow_end": { "type": "string", "format": "date-time" },

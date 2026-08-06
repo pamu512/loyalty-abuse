@@ -1,4 +1,7 @@
-# friction_v2_2 — honest A+ technical closeout
+# friction_v2_2 — in-repo technical readiness closeout
+
+> **Privacy:** Letter-grade maturity ratings are private ([`RATINGS_PRIVATE.md`](./RATINGS_PRIVATE.md)). This document uses capability language only.
+
 
 **Date:** 2026-08-06  
 **Policy:** `friction_v2_2`
@@ -21,9 +24,9 @@
 | `artifacts/calibration_v2_2.json` | binning ECE ≈ 0.0036, diversity OK |
 | `artifacts/threshold_selection_v2_2.json` | val 1257→615; report 2503→1816 |
 | `artifacts/graph_ablation_v2_2.json` | graph_payment_ring catch Δ = +1.0; cost −185 |
-| `artifacts/shadow_four_week_sim_v2_2.json` | pipeline only — not production A+ |
-| `docs/compliance/CLAIM_LOCK.md` | claim language |
+| `artifacts/shadow_four_week_sim_v2_2.json` | pipeline only — not live shadow readiness |
+| `docs/compliance/RATINGS_PRIVATE.md` | ratings stay private |
 
-## Production grades
+## Live readiness
 
-Still **not** claimed — see claim lock.
+Still **not** claimed in public docs. Internal status lives under `private/` (gitignored).

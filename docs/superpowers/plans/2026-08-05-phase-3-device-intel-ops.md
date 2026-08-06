@@ -1,16 +1,19 @@
-# Phase 3 — A++ Trajectory (Incognia + Ops Loop) Implementation Plan
+# Phase 3 — device-intel path Trajectory (Incognia + Ops Loop) Implementation Plan
+
+> **Privacy:** Letter-grade maturity ratings are private ([`docs/compliance/RATINGS_PRIVATE.md`](../../compliance/RATINGS_PRIVATE.md)). This document uses capability language only.
+
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship the A++ *path*: Incognia adapter (fixture + live-gated), challenge outcome ingest, optional consortium stub, continual adversarial drift report, and ops metrics — without claiming production A++ from synth alone.
+**Goal:** Ship the device-intel path *path*: Incognia adapter (fixture + live-gated), challenge outcome ingest, optional consortium stub, continual adversarial drift report, and ops metrics — without claiming live device-intel readiness from synth alone.
 
 **Architecture:** Vendor code lives under `adapters/incognia/` with optional `incognia-python`. Host/API fetches intel → writes normalized signals onto `EventEnvelope.payload` (`device_intel.*`) before `evaluate()`. Core reads only normalized payload keys / a tiny protocol — **never** `import incognia`. Challenge outcomes POST to API and join by `decision_id`/`event_id` for labels. Consortium is a no-op interface. Ops metrics extend analytics.
 
 **Tech Stack:** Python 3.12, existing FastAPI/SQLite stack; optional dep `incognia-python` (extras `[incognia]`); fixture JSON for offline
 
-**Spec:** `docs/superpowers/specs/2026-08-05-a-plus-plus-program-design.md` (Phase 3)
+**Spec:** `docs/superpowers/specs/2026-08-05-maturity-program-design.md` (Phase 3)
 
-**Base:** Branch `feat/phase-3-a-plus-plus` from current Phase 2 tip (`feat/phase-2-honest-a-plus`).
+**Base:** Branch `feat/phase-3-device-intel` from current Phase 2 tip (`feat/phase-2-technical-readiness`).
 
 ## Global Constraints
 
@@ -20,7 +23,7 @@
 - Keep `friction_v2_0` score contract (weighted_sum, points≈score) unless a tiny bump is required — prefer payload + policy floor without version bump.
 - Live Incognia calls only when `INCOGNIA_CLIENT_ID`, `INCOGNIA_CLIENT_SECRET`, `INCOGNIA_POLICY_ID` set; else fixture/replay.
 - Fail-closed for redeem when tenant `incognia_required=true` and call fails; else degrade with `intel.incognia_unavailable`.
-- Do not claim production A++ from fixtures/synth.
+- Do not claim live device-intel readiness from fixtures/synth.
 - Phase 1 adversarial + Phase 2 suites must stay green.
 
 ## File Structure
@@ -47,12 +50,12 @@
 
 ### Task 0: Branch + baseline green
 
-- [ ] Create `feat/phase-3-a-plus-plus` from Phase 2 tip; pytest + adversarial green.
+- [ ] Create `feat/phase-3-device-intel` from Phase 2 tip; pytest + adversarial green.
 
 ```bash
 cd /Users/pamu/Documents/GitHub/loyalty-abuse
-git checkout feat/phase-2-honest-a-plus
-git checkout -b feat/phase-3-a-plus-plus
+git checkout feat/phase-2-technical-readiness
+git checkout -b feat/phase-3-device-intel
 PYTHONPATH=src python3 -m pytest -q
 PYTHONPATH=src python3 scripts/adversarial_eval.py --seed 42 --out artifacts/adversarial_p3_baseline.json
 ```
@@ -220,7 +223,7 @@ Store in `challenge_outcomes`; do **not** rewrite historical decisions. Analytic
    - expected_loss sum vs allow-all baseline if economics present
    - intel_calls success_rate + p50 latency_ms
    - challenge_outcomes conversion (passed / (passed+failed+abandoned))
-4. README: A++ *path* shipped; production A++ needs live Incognia + real challenge labels + weeks of ops.
+4. README: device-intel path *path* shipped; live device-intel readiness needs live Incognia + real challenge labels + weeks of ops.
 
 - [ ] Commit `feat: consortium stub, drift reeval, ops metrics`
 
@@ -229,7 +232,7 @@ Store in `challenge_outcomes`; do **not** rewrite historical decisions. Analytic
 ### Task 7: Phase 3 closeout
 
 - [ ] Full pytest green; adversarial green; drift_reeval exit 0
-- [ ] Update program spec status: Phase 3 path complete; production A++ not claimed
+- [ ] Update program spec status: Phase 3 path complete; live device-intel readiness not claimed
 - [ ] Commit `chore: Phase 3 closeout`
 - [ ] Stop
 
@@ -247,7 +250,7 @@ Store in `challenge_outcomes`; do **not** rewrite historical decisions. Analytic
 | Consortium no-op | 6 |
 | Continual adversarial re-eval | 6 |
 | Ops metrics | 6 |
-| No A++ claim from synth | 7 / README |
+| No device-intel path claim from synth | 7 / README |
 
 ## Self-review notes
 

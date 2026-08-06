@@ -1,6 +1,6 @@
-"""Adversarial eval suite — primary honest B+ proof for friction_v2_2.
+"""Adversarial eval suite — primary adversarial gate proof for friction_v2_2.
 
-Honest B+ claim (what passing gates proves):
+Adversarial gate claim (what passing gates proves):
 1. Pattern catch (slow_multi_acct, sequential_promo) reaches soft_challenge+ via
    published interaction terms and/or soft floors — lone typology score may stay
    below the soft band; floor-driven soft catch is valid and labeled floor.soft.*.

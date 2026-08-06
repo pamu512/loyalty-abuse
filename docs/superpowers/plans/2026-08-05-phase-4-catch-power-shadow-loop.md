@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-05-phase-4-catch-power-shadow-loop-design.md`
 
-**Base:** Create `feat/phase-4-catch-power-shadow` from `feat/phase-3-a-plus-plus` tip.
+**Base:** Create `feat/phase-4-catch-power-shadow` from `feat/phase-3-device-intel` tip.
 
 ## Global Constraints
 
@@ -53,7 +53,7 @@
 
 ```bash
 cd /Users/pamu/Documents/GitHub/loyalty-abuse
-git checkout feat/phase-3-a-plus-plus
+git checkout feat/phase-3-device-intel
 git checkout -b feat/phase-4-catch-power-shadow
 PYTHONPATH=src:. python3 -m pytest -q
 PYTHONPATH=src:. python3 scripts/adversarial_eval.py --seed 42 --out artifacts/adversarial_p4_baseline.json
@@ -245,7 +245,7 @@ Reuse `loyalty_abuse.calibrate` fit/predict/ece. Write candidate params only if 
 
 Playbook: weeks 1–4 checklist (shadow on → host logging → outcomes → weekly metrics → retrain candidate → promote).
 
-Sim: generate ~28 days of synth events/decisions/outcomes; emit `artifacts/shadow_four_week_sim.json` with precision/recall/insult_proxy; banner note “not production A+”.
+Sim: generate ~28 days of synth events/decisions/outcomes; emit `artifacts/shadow_four_week_sim.json` with precision/recall/insult_proxy; banner note “not live shadow readiness”.
 
 - [ ] Commit `feat: four-week shadow playbook and sim`
 
@@ -257,7 +257,7 @@ Sim: generate ~28 days of synth events/decisions/outcomes; emit `artifacts/shado
 
 - Add `floor_raised_rate` / counts: decisions where reasons contain `floor.soft.` or hard floor raised above pure score band (store `band_friction` in snapshot optional — or recompute band from score in analytics).
 - Prefer: `evaluate` adds `features_snapshot["band_friction"]` = band before floors (tiny, honest attribution).
-- README Phase 4 section: catch-power + shadow path; production A+/A++ still needs live 4 weeks.
+- README Phase 4 section: catch-power + shadow path; live production / device-intel readiness still needs live 4 weeks.
 - Program spec status line update.
 - Full pytest + adversarial + drift_reeval green.
 
@@ -278,7 +278,7 @@ Sim: generate ~28 days of synth events/decisions/outcomes; emit `artifacts/shado
 | Retrain ECE gate | 6 |
 | Playbook + 28d sim | 7 |
 | Ops floor attribution | 8 |
-| No max_w / no false A++ claim | 4, 8 |
+| No max_w / no false device-intel path claim | 4, 8 |
 
 ## Self-review notes
 

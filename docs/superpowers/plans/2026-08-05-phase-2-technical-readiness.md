@@ -1,16 +1,19 @@
-# Phase 2 — Honest A / A+ Implementation Plan
+# Phase 2 — In-repo technical readiness Implementation Plan
+
+> **Privacy:** Letter-grade maturity ratings are private ([`docs/compliance/RATINGS_PRIVATE.md`](../../compliance/RATINGS_PRIVATE.md)). This document uses capability language only.
+
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship `friction_v2_0` with dollar-aware decisions, tenant graph features + ablation, probability calibration (ECE/Brier), and a shadow reporter + synthetic chronological dry-run — the standalone A / A+ bar from the program spec.
+**Goal:** Ship `friction_v2_0` with dollar-aware decisions, tenant graph features + ablation, probability calibration (ECE/Brier), and a shadow reporter + synthetic chronological dry-run — the in-repo technical readiness bar from the program spec.
 
 **Architecture:** Extend the Phase 1 engine without breaking the points≡score contract. Monetary payload fields feed `expected_loss_usd` via a published cost model. `FeatureStore` builds a lightweight in-memory tenant graph from observed events and exposes cluster features. A pure-Python Platt calibrator maps `score/100 → p_abuse`. Knees are chosen on a locked validation slice for min expected cost, reported on held-out adversarial + chronological test. Shadow logs recommended vs host action without requiring production weeks in-repo.
 
 **Tech Stack:** Python 3.12, pydantic, pytest, existing SQLite API — **no new dependencies** (no sklearn; Platt + ECE in stdlib math)
 
-**Spec:** `docs/superpowers/specs/2026-08-05-a-plus-plus-program-design.md` (Phase 2)
+**Spec:** `docs/superpowers/specs/2026-08-05-maturity-program-design.md` (Phase 2)
 
-**Base:** Branch from current Phase 1 tip (`feat/phase-1-honest-b-plus` @ latest). Create `feat/phase-2-honest-a-plus` before Task 1. Phase 1 need not be merged to `main` first.
+**Base:** Branch from current Phase 1 tip (`feat/phase-1-adversarial-gate` @ latest). Create `feat/phase-2-technical-readiness` before Task 1. Phase 1 need not be merged to `main` first.
 
 ## Global Constraints
 
@@ -21,7 +24,7 @@
 - `policy_version` = `friction_v2_0`; bump `SCHEMA_VERSION` to `2` for new Decision fields.
 - Cost knees selected on **locked validation** only; report metrics on held-out test — never retune on the report set.
 - Label provenance must be documented (red-team / synthetic chronological for this cycle).
-- Adversarial B+ suite must remain green (or intentionally retuned once with documented reason).
+- Adversarial adversarial gate suite must remain green (or intentionally retuned once with documented reason).
 - Phase 3 (Incognia) out of scope.
 
 ## File Structure
@@ -56,8 +59,8 @@
 
 ```bash
 cd /Users/pamu/Documents/GitHub/loyalty-abuse
-git checkout feat/phase-1-honest-b-plus
-git checkout -b feat/phase-2-honest-a-plus
+git checkout feat/phase-1-adversarial-gate
+git checkout -b feat/phase-2-technical-readiness
 PYTHONPATH=src python3 -m pytest -q
 PYTHONPATH=src python3 scripts/adversarial_eval.py --seed 42 --out artifacts/adversarial_baseline_p2.json
 ```
@@ -302,7 +305,7 @@ If ECE &gt; 0.05 after one fit: report actual ECE, try isotonic-on-bins (histogr
 - Modify: `src/loyalty_abuse_api/app.py` — `POST /v1/shadow/evaluate` returns Decision but also accepts optional `host_friction`; logs both. Live `/v1/evaluate` unchanged (enforcing path).
 - Create: `scripts/shadow_dry_run.py` — generate chronological events day-by-day, score shadow, later “confirm” labels from generator truth, emit precision/recall/insult proxy
 - Create: `tests/test_shadow.py`
-- README: shadow pipeline exists; production A+ needs ≥4 weeks real labels
+- README: shadow pipeline exists; live shadow readiness needs ≥4 weeks real labels
 
 - [ ] **Step 1: API test** shadow endpoint logs recommended vs host
 
@@ -316,8 +319,8 @@ If ECE &gt; 0.05 after one fit: report actual ECE, try isotonic-on-bins (histogr
 
 - [ ] Full pytest green
 - [ ] Adversarial seed 42 green (or documented retune)
-- [ ] README: honest A/A+ language tied to artifacts (economics, ablation, calibration ECE, shadow dry-run) — **do not claim production A+ without 4-week shadow**
-- [ ] Update program spec status line to Phase 2 complete (standalone A bar); Phase 3 pending
+- [ ] README: honest capability language tied to artifacts (economics, ablation, calibration ECE, shadow dry-run) — **do not claim live shadow readiness without 4-week shadow**
+- [ ] Update program spec status line to Phase 2 complete (in-repo technical readiness bar); Phase 3 pending
 - [ ] Commit `chore: Phase 2 closeout`
 - [ ] Stop — do not start Phase 3 without a Phase 3 plan
 
@@ -342,5 +345,5 @@ If ECE &gt; 0.05 after one fit: report actual ECE, try isotonic-on-bins (histogr
 - Task 3 must not peek at seed 42 for knee selection.
 - Economics before calibration may use raw score/100; Task 4 switches to `p_abuse`.
 - Graph typology weight changes may require one adversarial retune — keep anti-vanity.
-- Standalone A+ in-repo ≠ production A+ (4-week shadow) — README must say so.
+- In-repo technical readiness ≠ live shadow readiness (4-week shadow) — README must say so.
 )

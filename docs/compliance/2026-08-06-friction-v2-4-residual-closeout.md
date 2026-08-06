@@ -1,5 +1,8 @@
 # friction_v2_4 — residual risk closeout
 
+> **Privacy:** Letter-grade maturity ratings are private ([`RATINGS_PRIVATE.md`](./RATINGS_PRIVATE.md)). This document uses capability language only.
+
+
 **Policy:** `friction_v2_4`  
 **Pytest:** 175 passed
 
@@ -18,4 +21,4 @@
 
 ## Still open (honest)
 
-- Production A+ / A++: live shadow weeks + Incognia credentials.
+- live production / device-intel readiness: live shadow weeks + Incognia credentials.

@@ -14,7 +14,7 @@
 - Friction enum is exactly: `allow`, `throttle`, `soft_challenge`, `hard_challenge`, `block` — no `review`.
 - Economics path MUST NOT deny orders or set friction `block`.
 - No Accertify citations; no QSR naming.
-- No production A+/A++ claim without live evidence.
+- No live production / device-intel readiness claim without live evidence.
 - Full implementations only — no stubs or placeholder scorers.
 - Spec: `docs/superpowers/specs/2026-08-06-loyalty-abuse-v2-design.md`
 
@@ -123,11 +123,11 @@
 
 **Files:**
 - Create: `friction_v3_0.json`, `platt_v3_0.json`
-- Modify: calibration loader, `POLICY_VERSION`, CLAIM_LOCK, README
+- Modify: calibration loader, `POLICY_VERSION`, private claim lock, README
 - Regenerate: adversarial, ablation, calibration, external artifacts
 
 - [ ] **Step 1:** Point active cal to v3_0; fit platt; run suites.
-- [ ] **Step 2:** Update CLAIM_LOCK; full pytest; commit.
+- [ ] **Step 2:** Update private claim lock; full pytest; commit.
 
 ---
 

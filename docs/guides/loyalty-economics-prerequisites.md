@@ -3,7 +3,7 @@
 **Status:** Prerequisite (not implemented as a closed economic model)  
 **Date:** 2026-08-06  
 **Design:** [loyalty-economics-multi-gate-design](../../superpowers/specs/2026-08-06-loyalty-economics-multi-gate-design.md) — hygiene feeds + program config + hybrid derive; independent gates **dispatch / redeem / order** (not checkout-only).  
-**Related:** [graph-analysis](./graph-analysis.md), [competitive-score-matrix-2026-04](./competitive-score-matrix-2026-04.md), regrade canvas
+**Related:** [graph-analysis](./graph-analysis.md), [competitive-score-matrix-2026-04](./competitive-score-matrix-2026-04.md), maturity notes (private)
 
 ## Why this exists
 
@@ -123,7 +123,7 @@ Engine output schema: `loyalty_abuse.loyalty_economics_gates/v1`. Full gate vect
 | HTTP warehouse pack contract (Track C) | **Landed** — `loyalty_warehouse.py` + mock HTTP smoke; named-tenant DB still external |
 | Live tenant warehouse feeds + baselines | **Missing** — still required for production loyalty-abuse effectiveness |
 
-Fixture CI + warehouse HTTP contract prove the ingress path (complete → gates; incomplete → never `eligible: true`). They do **not** replace named-tenant order/LTV/ledger databases. Do **not** claim live loyalty-abuse effectiveness without those upstreams. Critical Inference **4.5** (A+B) uses bar=`fixture_ci` via `scripts/oss/inference_ab_claim_gate.py` — disclosed, not production L3.
+Fixture CI + warehouse HTTP contract prove the ingress path (complete → gates; incomplete → never `eligible: true`). They do **not** replace named-tenant order/LTV/ledger databases. Do **not** claim live loyalty-abuse effectiveness without those upstreams. Critical Inference **4.5** (fixture_ci bar) uses bar=`fixture_ci` via `scripts/oss/inference_ab_claim_gate.py` — disclosed, not production L3.
 
 ## Claim language
 

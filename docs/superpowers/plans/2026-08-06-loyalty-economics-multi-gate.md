@@ -396,7 +396,7 @@ git commit -m "feat: attach shadow loyalty economics gates on evaluate"
 - Modify: `src/loyalty_abuse/multi_gate.py`
 - Modify: `tests/test_multi_gate.py`
 - Modify: `docs/guides/loyalty-economics-prerequisites.md`
-- Modify: `docs/superpowers/canvases/maturity-4-0-regrade.canvas.tsx` (S9 note: engine landed, feeds still prerequisite)
+- Modify: maturity notes (private; not in public canvases) — S9 note: engine landed, feeds still prerequisite
 
 **Interfaces:**
 - Config optional `gate_policies`: `{ "dispatch": { "ratio_weight": 1.0, "churn_flips": true }, "redeem": {...}, "order": {...} }`

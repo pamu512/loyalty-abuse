@@ -1,14 +1,17 @@
-# Phase 1 — Honest B+ Implementation Plan
+# Phase 1 — Adversarial gate Implementation Plan
+
+> **Privacy:** Letter-grade maturity ratings are private ([`docs/compliance/RATINGS_PRIVATE.md`](../../compliance/RATINGS_PRIVATE.md)). This document uses capability language only.
+
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship `friction_v1_2`: honest score/points contract (no `max_weight_normalize`), soft-OR inside typologies, multi-window features, and an adversarial eval suite that is the primary B+ proof.
+**Goal:** Ship `friction_v1_2`: honest score/points contract (no `max_weight_normalize`), soft-OR inside typologies, multi-window features, and an adversarial eval suite that is the primary adversarial suite proof.
 
 **Architecture:** Calibration JSON switches to `blend: "weighted_sum"` with `policy_version: friction_v1_2`. `soft_or()` combines intra-typology evidence. `FeatureStore.snapshot` emits `*_1h` / `*_24h` / `*_7d` counters; scorers prefer the window matching attack tempo. `scripts/adversarial_eval.py` is CI-gating; 500k synth stays regression-only.
 
 **Tech Stack:** Python 3.12, pydantic, pytest, existing `loyalty_abuse` library (no new deps)
 
-**Spec:** `docs/superpowers/specs/2026-08-05-a-plus-plus-program-design.md` (Phase 1 section)
+**Spec:** `docs/superpowers/specs/2026-08-05-maturity-program-design.md` (Phase 1 section)
 
 ## Global Constraints
 
@@ -19,7 +22,7 @@
 - Friction bands stay 24/44/64/84 unless goldens prove a one-time retune is required (document if retuned).
 - `policy_version` = `friction_v1_2`.
 - `sum(typology.points) ≈ score` within ±1.
-- Adversarial suite is the grade claim; synth 500k is not.
+- Adversarial suite is the readiness claim; synth 500k is not.
 - Uncommitted v1.1 work on `main` must be landed (Task 0) before v1.2 edits.
 
 ## File Structure
@@ -41,7 +44,7 @@
 | `tests/test_features.py` | multi-window |
 | `tests/test_adversarial_eval.py` | thin wrapper / fixture slices |
 | `tests/fixtures/golden_tiers.json` | Retune expected frictions for v1.2 |
-| `README.md` | Note B+ claim via adversarial suite |
+| `README.md` | Note adversarial gate claim via adversarial suite |
 
 ---
 
@@ -475,13 +478,13 @@ git commit -m "feat: friction_v1_2 weighted_sum score contract"
 
 ---
 
-### Task 5: Adversarial eval suite (primary B+ proof)
+### Task 5: Adversarial eval suite (primary adversarial suite proof)
 
 **Files:**
 - Create: `scripts/adversarial_eval.py`
 - Create: `tests/fixtures/adversarial_slices.json` (optional compact journeys)
 - Create: `tests/test_adversarial_eval.py`
-- Modify: `README.md` (B+ claim language)
+- Modify: `README.md` (adversarial gate claim language)
 - Modify: `.gitignore` if writing `artifacts/adversarial_*.json`
 
 **Interfaces:**
@@ -535,12 +538,12 @@ If bounds fail: retune sat knees / ATO known-device confidence once; re-run seed
 
 - [ ] **Step 5: README + commit**
 
-README: state that honest B+ proof is `scripts/adversarial_eval.py`; synth 500k is regression-only.
+README: state that adversarial gate proof is `scripts/adversarial_eval.py`; synth 500k is regression-only.
 
 ```bash
 git add src/loyalty_abuse/eval/ scripts/adversarial_eval.py \
   tests/test_adversarial_eval.py README.md
-git commit -m "test: add adversarial eval suite as B+ gate"
+git commit -m "test: add adversarial eval suite as adversarial gate gate"
 ```
 
 ---

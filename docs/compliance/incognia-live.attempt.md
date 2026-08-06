@@ -1,6 +1,6 @@
 # Incognia live attempt — 2026-08-06 (v2 follow-up)
 
-**Goal:** Evidence for production A++ device-intel path.  
+**Goal:** Evidence for live device-intel path.  
 **Result:** **BLOCKED**
 
 ## Environment
@@ -16,7 +16,7 @@
 1. Re-checked process environment for Incognia credentials (still missing).
 2. Confirmed `adapters.incognia.env_creds_ready()` → `False`.
 3. Did **not** invent live assessment responses or forge success artifacts.
-4. Fixture-mode adapter tests remain the in-repo A++ *path* proof only.
+4. Fixture-mode adapter tests remain the in-repo device-intel path *path* proof only.
 
 ## Status file
 

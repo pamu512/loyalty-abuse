@@ -1,4 +1,4 @@
-"""Fail-closed production A+ claim gate."""
+"""Fail-closed live shadow readiness gate (ratings stay private)."""
 
 import json
 import subprocess
@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "assert_production_a_plus.py"
+SCRIPT = ROOT / "scripts" / "assert_live_shadow_readiness.py"
 
 
 def test_current_repo_not_met_is_ok():
@@ -18,12 +18,12 @@ def test_current_repo_not_met_is_ok():
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
     report = json.loads(proc.stdout)
-    assert report["may_claim_production_a_plus"] is False
+    assert report["may_claim_live_shadow_readiness"] is False
     assert report["ok"] is True
 
 
 def test_met_without_evidence_fails(tmp_path: Path):
-    status = tmp_path / "production-a-plus.status"
+    status = tmp_path / "live-shadow-readiness.status"
     status.write_text("MET — forged\n")
     proc = subprocess.run(
         [
@@ -44,13 +44,13 @@ def test_met_without_evidence_fails(tmp_path: Path):
 
 
 def test_met_with_synth_provenance_fails(tmp_path: Path):
-    status = tmp_path / "production-a-plus.status"
+    status = tmp_path / "live-shadow-readiness.status"
     status.write_text("MET — should fail\n")
     evidence = tmp_path / "ev.json"
     evidence.write_text(
         json.dumps(
             {
-                "claim": "production_a_plus",
+                "claim": "live_shadow_readiness",
                 "policy_version": "friction_v3_0",
                 "shadow_start": "2026-01-01T00:00:00Z",
                 "shadow_end": "2026-02-01T00:00:00Z",
@@ -85,13 +85,13 @@ def test_met_with_synth_provenance_fails(tmp_path: Path):
 
 
 def test_met_with_valid_live_evidence_ok(tmp_path: Path):
-    status = tmp_path / "production-a-plus.status"
+    status = tmp_path / "live-shadow-readiness.status"
     status.write_text("MET — live shadow complete\n")
     evidence = tmp_path / "ev.json"
     evidence.write_text(
         json.dumps(
             {
-                "claim": "production_a_plus",
+                "claim": "live_shadow_readiness",
                 "policy_version": "friction_v3_0",
                 "shadow_start": "2026-01-01T00:00:00Z",
                 "shadow_end": "2026-02-01T00:00:00Z",
@@ -126,5 +126,5 @@ def test_met_with_valid_live_evidence_ok(tmp_path: Path):
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
     report = json.loads(proc.stdout)
-    assert report["may_claim_production_a_plus"] is True
+    assert report["may_claim_live_shadow_readiness"] is True
     assert report["ok"] is True

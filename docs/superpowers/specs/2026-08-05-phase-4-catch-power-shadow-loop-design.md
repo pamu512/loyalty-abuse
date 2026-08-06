@@ -1,19 +1,19 @@
 # Phase 4 Design — Catch-Power + Shadow/Label Loop
 
 **Date:** 2026-08-05  
-**Status:** Implemented (catch-power + shadow/label loop + ops floor attribution); production A+/A++ not claimed  
-**Branch base:** `feat/phase-3-a-plus-plus` (Phases 1–3 complete)  
-**Program:** Extends `docs/superpowers/specs/2026-08-05-a-plus-plus-program-design.md`
+**Status:** Implemented (catch-power + shadow/label loop + ops floor attribution); live production / device-intel readiness not claimed  
+**Branch base:** `feat/phase-3-device-intel` (Phases 1–3 complete)  
+**Program:** Extends `docs/superpowers/specs/2026-08-05-maturity-program-design.md`
 
 ## Goal
 
-Raise honest soft-challenge reach for strong single-pattern abuse (without returning to `max_weight_normalize` theater), then close the production path for A+/A++ claims via a shadow → outcome → recalibration loop and a 4-week ops playbook.
+Raise honest soft-challenge reach for strong single-pattern abuse (without returning to `max_weight_normalize` theater), then close the production path for technical readiness/device-intel path claims via a shadow → outcome → recalibration loop and a 4-week ops playbook.
 
 ## Locked decisions
 
 | Decision | Choice |
 |---|---|
-| Scope | **B+D**: production shadow/label loop **and** catch-power redesign |
+| Scope | **Parts B and D**: production shadow/label loop **and** catch-power redesign |
 | Sequence | **A**: catch-power first, then shadow/label loop |
 | Catch-power math | **Approach 1**: published interaction terms on the score |
 | Catch-power friction | **Approach 3**: soft-floor predicates elevate friction only (score unchanged) |
@@ -22,8 +22,8 @@ Raise honest soft-challenge reach for strong single-pattern abuse (without retur
 
 ## Grade honesty
 
-- Catch-power success does **not** by itself justify production A+ / A++.
-- Production A+ / A++ still requires live shadow (≥4 weeks) and real outcome labels.
+- Catch-power success does **not** by itself justify live production / device-intel readiness.
+- live production / device-intel readiness still requires live shadow (≥4 weeks) and real outcome labels.
 - The repo ships a **28-day synthetic shadow simulation** and a playbook; the sim must not be cited as production proof.
 
 ## Part A — Catch-power (`friction_v2_1`)
@@ -82,7 +82,7 @@ friction = apply_floors(band, snapshot, results)  # soft + hard
 - Pattern-oriented slices must be able to reach `soft_challenge+` via **interaction score and/or soft floor**, not redeem-velocity hard_floor padding.
 - Soft-floor catches must include the matching `floor.soft.*` reason family (or typology family if score alone reaches soft).
 - Household `allow_rate ≥ 0.85` preserved.
-- Update honest B+ claim language: lone typology may still score below soft; soft catch may be floor-driven and must be labeled as such in README.
+- Update adversarial gate claim language: lone typology may still score below soft; soft catch may be floor-driven and must be labeled as such in README.
 
 ## Part B — Shadow / label loop
 
@@ -120,7 +120,7 @@ Do **not** rewrite historical decision scores when labels arrive.
 - Playbook: `docs/superpowers/playbooks/2026-08-05-shadow-four-week.md`  
   Week-by-week: enable shadow → log host action → ingest outcomes → weekly insult/$ → candidate retrain → promote.
 - Sim: `scripts/shadow_four_week_sim.py` — synthetic ~28-day chronological dry-run producing an artifact report.
-- Live ≥4 weeks remains an **ops** requirement for production A+ / A++ claims.
+- Live ≥4 weeks remains an **ops** requirement for live production / device-intel readiness claims.
 
 ### Ops metrics
 
@@ -176,7 +176,7 @@ Host shadow → outcomes / clawbacks → label set
 - No return of `max_weight_normalize`.
 - No `review` queue.
 - No Phase 3 Incognia redesign.
-- No production A++ claim from the 28-day sim alone.
+- No live device-intel readiness claim from the 28-day sim alone.
 - No GNN.
 
 ## Deliverable sequencing
@@ -184,7 +184,7 @@ Host shadow → outcomes / clawbacks → label set
 1. This design spec (committed).
 2. Implementation plan Phase 4 Part A (catch-power) → implement → green adversarial.
 3. Implementation plan Phase 4 Part B (shadow loop) → implement → playbook + sim + retrain gate.
-4. README / program status update: catch-power + shadow path; production A+/A++ still ops-gated.
+4. README / program status update: catch-power + shadow path; live production / device-intel readiness still ops-gated.
 
 ## Success criteria
 

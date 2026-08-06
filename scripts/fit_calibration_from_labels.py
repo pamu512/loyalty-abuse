@@ -3,7 +3,7 @@
 
 Fail-closed for production claims:
 - Requires ≥1 row with provenance in {challenge_failed, challenge_abandoned, clawback}.
-- Pure synth/red_team label sets exit 2 (cannot unlock production A+).
+- Pure synth/red_team label sets exit 2 (cannot unlock live shadow readiness).
 - Score-path only when ``band_friction`` present and friction == band (else keep row;
   floor hygiene needs band_friction on decisions).
 """
@@ -31,7 +31,7 @@ from loyalty_abuse.calibrate import (  # noqa: E402
 PRODUCTION_PROVENANCE = frozenset(
     {"challenge_failed", "challenge_abandoned", "clawback"}
 )
-# Spec / CLAIM_LOCK / assert_production_a_plus: production outcome ECE ≤ 0.05
+# Spec / private claim lock / assert_live_shadow_readiness: production outcome ECE ≤ 0.05
 ECE_TARGET = 0.05
 PLATT_L2 = 1.0
 PLATT_A_ABS_MAX = 12.0

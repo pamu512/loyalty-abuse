@@ -141,7 +141,7 @@ def run_dry_run(
         "by_day": by_day_counts,
         "note": (
             "Synthetic chronological dry-run only. "
-            "Production A+ requires ≥4 weeks shadow with real later-confirmed labels."
+            "live shadow readiness requires ≥4 weeks shadow with real later-confirmed labels."
         ),
     }
 

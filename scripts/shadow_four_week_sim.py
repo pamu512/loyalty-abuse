@@ -2,7 +2,7 @@
 """Synthetic 28-day shadow loop: events → decisions → outcomes → labels → metrics.
 
 This sim exercises the shadow→label→retrain pipeline with generator truth.
-It is **not** production A+ proof — live shadow requires ≥4 weeks with real labels.
+It is **not** live shadow readiness proof — live shadow requires ≥4 weeks with real labels.
 """
 from __future__ import annotations
 
@@ -30,8 +30,8 @@ from synth_eval import GENERATORS, _alloc, _geq  # noqa: E402
 DAYS = 28
 WEEKS = 4
 BANNER = (
-    "NOT PRODUCTION A+ — synthetic 28-day simulation only. "
-    "Production A+/A++ requires live shadow ≥4 weeks with real later-confirmed outcome labels."
+    "NOT LIVE SHADOW READINESS — synthetic 28-day simulation only. "
+    "live production / device-intel readiness requires live shadow ≥4 weeks with real later-confirmed outcome labels."
 )
 
 

@@ -1,6 +1,9 @@
-# friction_v2_3 — technical A/A+ closeout
+# friction_v2_3 — in-repo technical readiness closeout
 
-Clears third-party audit F1–F4 for **technical** standalone A/A+. Production A+/A++ still refused.
+> **Privacy:** Letter-grade maturity ratings are private ([`RATINGS_PRIVATE.md`](./RATINGS_PRIVATE.md)). This document uses capability language only.
+
+
+Clears third-party audit F1–F4 for **in-repo technical readiness**. Live production / device-intel readiness still refused.
 
 ## Evidence
 
@@ -13,4 +16,4 @@ Clears third-party audit F1–F4 for **technical** standalone A/A+. Production A
 
 ## Not claimed
 
-Production A+ / A++ — see CLAIM_LOCK.md.
+Live production / device-intel readiness — internal status under `private/` only; see [`RATINGS_PRIVATE.md`](./RATINGS_PRIVATE.md).

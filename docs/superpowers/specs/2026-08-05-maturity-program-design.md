@@ -1,13 +1,16 @@
-# A++ Program Design — Loyalty Abuse Engine
+# Maturity program Design — Loyalty Abuse Engine
+
+> **Privacy:** Letter-grade maturity ratings are private ([`docs/compliance/RATINGS_PRIVATE.md`](../../compliance/RATINGS_PRIVATE.md)). This document uses capability language only.
+
 
 **Date:** 2026-08-05  
-**Status:** Phase 4 path complete (catch-power `friction_v2_1`, shadow/label loop, ops floor attribution); production A+/A++ not claimed  
+**Status:** Phase 4 path complete (catch-power `friction_v2_1`, shadow/label loop, ops floor attribution); live production / device-intel readiness not claimed  
 **Repo:** standalone `loyalty-abuse`  
-**Prior art:** v1 engine + scoring math v1.1; critical review B−; path-to-A+ research canvas
+**Prior art:** v1 engine + scoring math v1.1; earlier critical review; path-to-readiness research notes (private)
 
 ## Goal
 
-Move from an explainable rules engine with circular synth proof (B−) to an honest **A / A+** standalone bar, with a concrete **A++ trajectory** via Incognia device intelligence, challenge outcome feedback, and ops economics — without inventing a review queue or coupling core to any host.
+Move from an explainable rules engine with circular synth proof to an honest **in-repo technical readiness** standalone bar, with a concrete **device-intel + ops trajectory** via Incognia device intelligence, challenge outcome feedback, and ops economics — without inventing a review queue or coupling core to any host.
 
 ## Locked decisions
 
@@ -20,13 +23,13 @@ Move from an explainable rules engine with circular synth proof (B−) to an hon
 | Friction model | Keep `allow` → `throttle` → `soft_challenge` → `hard_challenge` → `block` (no `review`) |
 | Observe contract | Only `evaluate()` calls `store.observe` for the scored event |
 
-## Grade definitions (honest)
+## Phase / capability definitions (public)
 
-- **B+:** Non-circular adversarial eval can fail; score/points contract is true; soft-OR + multi-window reduce trivial evasion/FP blind spots.
-- **A / A+ (standalone):** Dollar-weighted decisions, graph features with ablation, probability calibration (ECE/Brier), shadow reporter; production A+ additionally needs real outcome labels and ≥4 weeks shadow.
-- **A++:** Operating system — strong device intel (Incognia), closed-loop challenge outcomes, continual drift re-eval, ops insult/loss dashboards; consortium hash exchange optional/additive.
+- **Adversarial gate:** Non-circular adversarial eval can fail; score/points contract is true; soft-OR + multi-window reduce trivial evasion/FP blind spots.
+- **In-repo technical readiness:** Dollar-weighted decisions, graph features with ablation, probability calibration (ECE/Brier), shadow reporter; live shadow readiness additionally needs real outcome labels and ≥4 weeks shadow.
+- **Device-intel + ops path:** Strong device intel (Incognia), closed-loop challenge outcomes, continual drift re-eval, ops insult/loss dashboards; consortium hash exchange optional/additive.
 
-Claiming a grade requires the artifact table under Testing and grade claims — not synth gate polish.
+Letter-grade ratings for these capabilities are private — see [`docs/compliance/RATINGS_PRIVATE.md`](../../compliance/RATINGS_PRIVATE.md). Public claims require the artifact table under Testing — not synth gate polish.
 
 ## Architecture
 
@@ -50,7 +53,7 @@ Host enforces friction → outcome webhook → labels → calibrate / cost re-tu
 - `adapters/tarka/`: optional host mapper (unchanged role).
 - Challenge enforcement: host-owned; core emits friction + reasons only.
 
-## Phase 1 — Honest B+ (implement next)
+## Phase 1 — Adversarial gate (implement next)
 
 `policy_version`: `friction_v1_2`
 
@@ -63,7 +66,7 @@ Host enforces friction → outcome webhook → labels → calibrate / cost re-tu
   - sequential promo stack (not simultaneous)
   - ATO on known device (no bare `new_device` / `new_geo` gift)
 - Acceptance bounds per slice are published with the suite; **CI fails** if any slice misses.
-- Existing 500k synth eval becomes **regression-only**; it must not be the grade claim.
+- Existing 500k synth eval becomes **regression-only**; it must not be the readiness claim.
 
 ### Score contract
 
@@ -84,7 +87,7 @@ Host enforces friction → outcome webhook → labels → calibrate / cost re-tu
 
 Graph store, dollar thresholds, ECE calibration, Incognia client (event field hooks only if needed for forward compat).
 
-## Phase 2 — Honest A / A+
+## Phase 2 — In-repo technical readiness
 
 ### Economics
 
@@ -108,10 +111,10 @@ Graph store, dollar thresholds, ECE calibration, Incognia client (event field ho
 ### Shadow
 
 - Shadow path: compute score + recommended friction; host action unchanged; log both.
-- Production A+ claim: ≥4 weeks shadow with later-confirmed labels.
+- live shadow readiness claim: ≥4 weeks shadow with later-confirmed labels.
 - This repo cycle: ship reporter + synthetic chronological shadow dry-run so the pipeline exists.
 
-## Phase 3 — A++ trajectory (Incognia + ops loop)
+## Phase 3 — device-intel + ops trajectory (Incognia + ops loop)
 
 ### Incognia adapter
 
@@ -148,20 +151,20 @@ Optional dependency: `incognia-python`
 - Incognia timeout/5xx: fail-closed if required; else degrade with `intel.incognia_unavailable`.
 - Late/missing challenge outcomes: do not silently rewrite historical scores; join labels when present for calibration / reporting.
 
-## Testing and grade claims
+## Testing and readiness claims
 
 | Claim | Required artifact |
 |---|---|
-| B+ | Adversarial suite green + points≡score contract tests + soft-OR / multi-window unit tests |
-| A / A+ | $ objective report + graph ablation + ECE/Brier + shadow reporter (prod weeks for live A+) |
-| A++ path | Incognia adapter (fixture + live-gated) + challenge outcome loop + ops metrics |
+| adversarial gate | Adversarial suite green + points≡score contract tests + soft-OR / multi-window unit tests |
+| in-repo technical readiness | $ objective report + graph ablation + ECE/Brier + shadow reporter (prod weeks for live technical readiness) |
+| device-intel + ops path | Incognia adapter (fixture + live-gated) + challenge outcome loop + ops metrics |
 
 ## Non-goals
 
 - No `review` queue action.
 - No GNN in core until graph features + labels prove need.
 - No Tarka (or Incognia) imports in core.
-- No A++ claim from synthetic cooperation alone.
+- No device-intel path claim from synthetic cooperation alone.
 - Consortium partner not required to complete the Incognia path.
 
 ## Deliverable sequencing
@@ -176,5 +179,5 @@ Optional dependency: `incognia-python`
 - Phase 1 merges only when adversarial suite and score contract tests pass.
 - Phase 2 merges only when ablation + cost-threshold selection + calibration metrics are published as artifacts under `artifacts/` (gitignored raw) with a committed summary path or notebook.
 - Phase 3 merges only when Incognia fixture tests pass and live mode is documented; challenge outcome ingest exists end-to-end in API or adapter tests.
-- README states honest grade language tied to artifacts, not marketing.
+- README states honest capability language tied to artifacts, not marketing. Letter grades stay private.
 

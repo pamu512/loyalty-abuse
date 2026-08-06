@@ -4,7 +4,7 @@
 **Status:** Approved for planning  
 **Closes (partial):** Missed-mark C1/C3/S9 — related ≠ abuse; upstream hygiene + economics  
 **Does not close:** Live L2 partner pin, L3 four-week ops, location reweight (separate)  
-**Related:** [loyalty-abuse-model-prerequisites.md](../../docs/guides/loyalty-abuse-model-prerequisites.md), critical regrade canvas
+**Related:** [loyalty-abuse-model-prerequisites.md](../../docs/guides/loyalty-abuse-model-prerequisites.md), critical maturity notes (private)
 
 ## Goal
 

@@ -92,24 +92,24 @@ Seeds six abuse patterns (multi-account, promo stack, referral self-deal, bot re
 
 ## Offline evaluation
 
-**Grade claims** (see [program spec](docs/superpowers/specs/2026-08-05-a-plus-plus-program-design.md)) require the artifacts below — not synth gate polish.
+**Privacy:** Letter-grade maturity ratings are private — see [`docs/compliance/RATINGS_PRIVATE.md`](docs/compliance/RATINGS_PRIVATE.md). Public docs describe gates and capabilities only.
 
-### Primary gate (B+ floor, still required)
+### Primary gate (adversarial suite)
 
-Adversarial suite on `friction_v2_4` (`policy_version` in artifact):
+Adversarial suite on current policy (`policy_version` in artifact):
 
 ```bash
-PYTHONPATH=src python3 scripts/adversarial_eval.py --seed 42 --out artifacts/adversarial_v2_4.json
+PYTHONPATH=src python3 scripts/adversarial_eval.py --seed 42 --out artifacts/adversarial_v3_0.json
 PYTHONPATH=src python3 -c "from loyalty_abuse.eval.external_holdout import run_external_holdout; print(run_external_holdout()['gates_pass'])"
 ```
 
 Exit code 0 only when all slice bounds pass (household FP allow-rate ≥ 0.85 and block-rate ≤ 0.5; device-rotation / slow-multi / sequential-promo / known-device ATO catch-rates at soft_challenge+). See `src/loyalty_abuse/eval/adversarial.py` for published bounds.
 
-**Catch-power (`friction_v2_4`):** Score blend includes published interaction terms (`ix.*` in breakdown). Soft floors (`floor.soft.*`) may raise friction without raising score — a lone typology can sit below the soft band while friction reaches `soft_challenge+` via floor predicates. Adversarial gates require pattern slices to catch honestly (typology, interaction, or soft-floor attribution; no redeem-velocity hard_floor vanity; combined pattern block-rate ≤ 0.5). Frozen external holdout: `tests/fixtures/external_journeys.json`.
+**Catch-power:** Score blend includes published interaction terms (`ix.*` in breakdown). Soft floors (`floor.soft.*`) may raise friction without raising score — a lone typology can sit below the soft band while friction reaches `soft_challenge+` via floor predicates. Adversarial gates require pattern slices to catch honestly (typology, interaction, or soft-floor attribution; no redeem-velocity hard_floor vanity; combined pattern block-rate ≤ 0.5). Frozen external holdout: `tests/fixtures/external_journeys.json`.
 
-The synthetic 500k eval (`scripts/synth_eval.py`) is **regression-only** — it must not be cited as a grade claim.
+The synthetic 500k eval (`scripts/synth_eval.py`) is **regression-only** — it must not be cited as a readiness claim.
 
-### Standalone A bar (Phase 2 — in-repo)
+### In-repo technical bar (Phase 2)
 
 | Artifact | Command | Published result |
 |---|---|---|
@@ -120,15 +120,13 @@ The synthetic 500k eval (`scripts/synth_eval.py`) is **regression-only** — it 
 
 Summaries: [`docs/superpowers/artifacts/`](docs/superpowers/artifacts/). Raw JSON under `artifacts/` (gitignored).
 
-Claim lock: [`docs/compliance/CLAIM_LOCK.md`](docs/compliance/CLAIM_LOCK.md).
+Dollar-weighted threshold selection, graph ablation, calibrated `p_abuse`, and shadow logging are wired in-repo. Graph ablation shows no incremental catch on this synthetic holdout — graph value remains unproven until denser tenant graphs or production labels.
 
-**Honest standalone A claim:** Dollar-weighted threshold selection, graph ablation report, calibrated `p_abuse` with held-out ECE, and shadow logging are all wired and published. Graph ablation shows no incremental catch on this synthetic holdout — graph value remains unproven until denser tenant graphs or production labels.
+**Live shadow readiness** additionally requires real later-confirmed outcome labels and **≥4 weeks** of shadow vs host action. Synthetic dry-runs and in-repo 28-day sims prove pipeline wiring only. Fail-closed gate: `python3 scripts/assert_live_shadow_readiness.py`.
 
-**Not production A+:** Live A+ additionally requires real later-confirmed outcome labels and **≥4 weeks** of shadow vs host action. The synthetic dry-run (`artifacts/shadow_dry_run.json`: precision 1.0, recall 0.4, insult_proxy 0.0) and any in-repo 28-day sim prove pipeline wiring only — do not claim production A+ from them. Fail-closed gate: `python3 scripts/assert_production_a_plus.py` (exits 1 if status is MET without valid live evidence).
+### Device-intel + ops path (Phase 3 — in-repo)
 
-### A++ path (Phase 3 — in-repo)
-
-The A++ *path* is shipped: Incognia adapter (fixture + live-gated), challenge outcome ingest, consortium no-op stub, continual drift re-eval, and ops metrics on `GET /v1/analytics/summary`.
+Incognia adapter (fixture + live-gated), challenge outcome ingest, consortium no-op stub, continual drift re-eval, and ops metrics on `GET /v1/analytics/summary` are shipped.
 
 ```bash
 PYTHONPATH=src python3 scripts/drift_reeval.py --seed 42 --out artifacts/drift_reeval.json
@@ -136,11 +134,11 @@ PYTHONPATH=src python3 scripts/drift_reeval.py --seed 42 --out artifacts/drift_r
 
 Exit 1 if any adversarial slice fails its bound.
 
-**Not production A++:** Live A++ needs live Incognia, real challenge labels, and weeks of ops — do not claim production A++ from synthetic fixtures, dry-runs, or a 28-day sim alone.
+**Live device-intel** needs live Incognia credentials, real challenge labels, and weeks of ops — do not treat fixtures or dry-runs as live proof. See `docs/compliance/incognia-live.status`.
 
 ### Phase 4 — Catch-power + shadow/label loop (in-repo)
 
-**Catch-power (`friction_v2_4`):** Published interaction terms (`ix.*`) on the score blend plus soft-floor predicates (`floor.soft.*`) that raise friction without raising score. `evaluate()` stores `band_friction` in `features_snapshot` (score-band action before floors) for honest ops attribution.
+**Catch-power:** Published interaction terms (`ix.*`) on the score blend plus soft-floor predicates (`floor.soft.*`) that raise friction without raising score. `evaluate()` stores `band_friction` in `features_snapshot` (score-band action before floors) for honest ops attribution.
 
 **Shadow/label loop:** Outcome labels join decisions; retrain gate checks held-out ECE; four-week playbook at [`docs/superpowers/playbooks/2026-08-05-shadow-four-week.md`](docs/superpowers/playbooks/2026-08-05-shadow-four-week.md); synthetic 28-day sim:
 
@@ -150,7 +148,7 @@ PYTHONPATH=src python3 scripts/shadow_four_week_sim.py --seed 42 --out artifacts
 
 Ops metrics on `GET /v1/analytics/summary` include `floor_raised_count` / `floor_raised_rate` (decisions where soft-floor reasons fired or final friction exceeds score-band friction).
 
-**Not production A+ / A++:** Phase 4 closes the in-repo path (catch-power, shadow logging, label join, retrain gate, playbook, sim). Production A+ and A++ still require **≥4 weeks** of live shadow vs host action and real outcome labels — the 28-day sim and adversarial suite prove wiring and honest catch only, not production grade.
+Phase 4 closes the in-repo path (catch-power, shadow logging, label join, retrain gate, playbook, sim). Live production readiness still requires **≥4 weeks** of live shadow vs host action and real outcome labels.
 
 After decisions are persisted:
 

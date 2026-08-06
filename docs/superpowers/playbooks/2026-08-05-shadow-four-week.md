@@ -1,9 +1,9 @@
 # Four-Week Shadow Playbook
 
 **Policy:** `friction_v3_0`  
-**Purpose:** Ops checklist to reach an honest **production A+** claim via live shadow — **not** via in-repo simulation.
+**Purpose:** Ops checklist for **live shadow readiness** — real traffic and later-confirmed labels, **not** in-repo simulation.
 
-> **Honesty banner:** `scripts/shadow_four_week_sim.py` and `artifacts/shadow_four_week_sim*.json` prove pipeline wiring only. They do **not** satisfy the live ≥4-week shadow requirement. Do not cite the sim as production A+ proof. Claim unlock requires `docs/compliance/production-a-plus.evidence.json` validated by `scripts/assert_production_a_plus.py`.
+> **Honesty banner:** `scripts/shadow_four_week_sim.py` and `artifacts/shadow_four_week_sim*.json` prove pipeline wiring only. They do **not** satisfy the live ≥4-week shadow requirement. Claim unlock requires `private/live-shadow-readiness.evidence.json` (gitignored) validated by `scripts/assert_live_shadow_readiness.py`. Letter-grade ratings stay private — see [`docs/compliance/RATINGS_PRIVATE.md`](../../compliance/RATINGS_PRIVATE.md).
 
 ---
 
@@ -17,7 +17,7 @@
 - [ ] Optional clawback/ban feed keyed by `decision_id` / `event_id`
 - [ ] Label join: `scripts/build_label_set.py`
 - [ ] Outcome calibration: `scripts/fit_calibration_from_labels.py` (ECE ≤ 0.05; refuses synth-only)
-- [ ] Production claim gate green when NOT MET: `python3 scripts/assert_production_a_plus.py`
+- [ ] Readiness gate green when NOT MET: `python3 scripts/assert_live_shadow_readiness.py`
 
 ---
 
@@ -63,21 +63,21 @@
 
 ---
 
-## Week 4 — Review + claim packet
+## Week 4 — Review + evidence packet
 
-**Goal:** Assemble production A+ evidence or stay NOT MET honestly.
+**Goal:** Assemble live-shadow readiness evidence or stay NOT MET honestly.
 
 - [ ] Confirm ≥28 calendar days from `shadow_start` to `shadow_end`
-- [ ] Fill `docs/compliance/production-a-plus.evidence.json` per schema
+- [ ] Fill `private/live-shadow-readiness.evidence.json` per `docs/compliance/live-shadow-readiness.evidence.schema.json`
 - [ ] Attestation: `not_simulation=true`, `live_traffic=true`, named operator
-- [ ] Run `python3 scripts/assert_production_a_plus.py` — must pass before flipping status to MET
-- [ ] Only then set `docs/compliance/production-a-plus.status` first line to `MET — …`
-- [ ] Update `CLAIM_LOCK.md`
+- [ ] Run `python3 scripts/assert_live_shadow_readiness.py` — must pass before flipping status to MET
+- [ ] Only then set `private/live-shadow-readiness.status` first line to `MET — …`
+- [ ] Update `private/RATINGS_PRIVATE.md` (never commit grade tables)
 
 **If evidence fails:** leave status `NOT MET`. Do not forge.
 
 ---
 
-## Production A++ (separate)
+## Live device-intel (separate)
 
-Requires Incognia live credentials + successful live assessment smoke. See `docs/compliance/incognia-live.status`. Fixture mode is not A++.
+Requires Incognia live credentials + successful live assessment smoke. See `docs/compliance/incognia-live.status`. Fixture mode is not live device-intel proof.

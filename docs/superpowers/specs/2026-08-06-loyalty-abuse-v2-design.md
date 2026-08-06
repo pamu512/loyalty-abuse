@@ -7,11 +7,11 @@
 
 ## Goal
 
-Ship a production-ready standalone loyalty-abuse service (auth, tenancy, deploy/ops, ops dashboard) interleaved with a complete catch/math upgrade: new typologies, deeper signals, calibration realism, and a unified friction + economics decision envelope — without claiming production A+/A++ until live evidence exists.
+Ship a production-ready standalone loyalty-abuse service (auth, tenancy, deploy/ops, ops dashboard) interleaved with a complete catch/math upgrade: new typologies, deeper signals, calibration realism, and a unified friction + economics decision envelope — without claiming live production / device-intel readiness until live evidence exists.
 
 ## Non-goals
 
-- Production A+/A++ claim without ≥4 weeks live shadow + real outcome labels + Incognia credentials.
+- live production / device-intel readiness claim without ≥4 weeks live shadow + real outcome labels + Incognia credentials.
 - GNN-first graph ML (v2 deepens deterministic graph features only).
 - Review queue / `review` friction action.
 - Economics path denying orders / setting friction `block`.
@@ -54,7 +54,7 @@ Ops dashboard ← authenticated analytics / ops metrics
 2. **M2 Deeper signals** — Multi-bucket counters; graph hops / similarity; device intel soft-OR; promo lifecycle.
 3. **M3 Calibration realism** — Temporal holdout; expanded external pack; drift artifact; outcome-cal fail-closed.
 4. **M4 Unified envelope** — `UnifiedDecision` + `/v1/decide`; economics cannot deny.
-5. **M5 Policy proof** — `friction_v3_0` + `platt_v3_0`; regenerate artifacts; CLAIM_LOCK.
+5. **M5 Policy proof** — `friction_v3_0` + `platt_v3_0`; regenerate artifacts; update private claim lock locally (not committed).
 
 ## Acceptance
 
@@ -67,7 +67,7 @@ Ops dashboard ← authenticated analytics / ops metrics
 | Typologies | Each new typology has scorer, weight, adversarial slice, external freeze |
 | Cal | Score-path Platt; outcome path refuses synth-only; temporal holdout script |
 | Proof | Adversarial + external + ablation gates_pass under `friction_v3_0` |
-| Claims | Production A+/A++ remain NOT MET in CLAIM_LOCK |
+| Claims | Live production / device-intel readiness not published; status only in `private/` |
 
 ## Research appendix (platform patterns)
 
@@ -86,5 +86,5 @@ Ops dashboard ← authenticated analytics / ops metrics
 - Friction enum unchanged; no `review` action.
 - Economics never denies the order.
 - No Accertify / QSR naming.
-- No production A+ claim without live shadow + real labels.
+- No live shadow readiness claim without live shadow + real labels.
 - Full implementation per task; no stubs / TODOs / placeholder scorers.
