@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from loyalty_abuse.features import FeatureStore
 from loyalty_abuse_api.app import create_app
+from tests.api_helpers import authed_client
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))

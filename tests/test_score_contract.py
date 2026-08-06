@@ -22,7 +22,7 @@ def test_points_sum_matches_score(case):
     d = evaluate(events[-1], store)
     pts = sum(t.points for t in d.typology_breakdown)
     assert abs(pts - d.score) <= 1
-    assert d.policy_version == "friction_v2_4"
+    assert d.policy_version == "friction_v3_0"
 
 
 def test_points_sum_includes_interaction_rows():
@@ -37,6 +37,10 @@ def test_points_sum_includes_interaction_rows():
         "referral_self_deal": 0.0,
         "code_leak": 0.0,
         "promo_stack": 1.0,
+        "gift_card_drain": 0.0,
+        "partner_promo_farm": 0.0,
+        "return_to_points": 0.0,
+        "trial_referral_farm": 0.0,
     }
     score = int(round(100.0 * clip(blend_raw(weights, conf, interactions))))
     typ_pts = sum(int(round(100.0 * float(weights[tid]) * conf[tid])) for tid in weights)

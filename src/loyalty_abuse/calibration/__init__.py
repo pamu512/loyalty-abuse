@@ -5,7 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-_CAL_PATH = Path(__file__).with_name("friction_v2_4.json")
+_CAL_PATH = Path(__file__).with_name("friction_v3_0.json")
 
 
 class CalibrationError(ValueError):

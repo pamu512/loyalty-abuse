@@ -1,46 +1,36 @@
 # Claim lock — loyalty-abuse standalone
 
 **Date:** 2026-08-06  
-**Policy:** `friction_v2_4`  
-**Commit gate:** artifacts regenerated this date; pytest green
+**Policy:** `friction_v3_0`  
+**Program:** Twin-track v2 (product + math) — see `docs/superpowers/specs/2026-08-06-loyalty-abuse-v2-design.md`
 
 ## What may be claimed
 
 | Claim | Status | Evidence |
 |---|---|---|
-| **B+** | MET | `artifacts/adversarial_v2_4.json` gates_pass incl. near-miss + diversity |
-| **Standalone A / A+ (technical)** | MET | See auditor-clearance below |
-| **A++ path (in-repo)** | MET | Incognia fixture+live-gated; outcomes; drift; ops; external holdout |
+| **B+** | MET | `artifacts/adversarial_v3_0.json` gates_pass |
+| **Standalone A / A+ (technical)** | MET | Auditor gates + external holdout + deploy/auth product surface |
+| **A++ path (in-repo)** | MET | Incognia fixture+live-gated; outcomes; drift; ops dashboard |
 | **Production A+** | NOT MET | ≥4 weeks live shadow + real outcome labels required |
-| **Production A++** | NOT MET | Live Incognia credentials required (`incognia-live.status`) |
+| **Production A++** | NOT MET | Live Incognia credentials required |
 
-## Auditor clearance (F1–F4) — technical A/A+
+## v2 product surface
 
-| Finding | Clearance evidence |
-|---|---|
-| F1 p_abuse step | `p_abuse_not_step` bound **0.50**; score-path-only L2 Platt (`platt_v2_4`); friction priors; published `p_abuse_cap=0.97` |
-| F2 score≠friction≠p | `ato_p_friction_coherent`: zero allow-band+hard+p≥0.95; ATO p≈0.60 via floor prior 0.38 not 1.0 |
-| F3 graph circularity | `graph_payment_ring` catch via score path; ablation regenerable |
-| F4 cooperative eval | `nonperfect_catch` ≥2; `ato_score_variance` ≥2; **frozen** `tests/fixtures/external_journeys.json` holdout |
+- API keys (SHA-256), tenant isolation, rate limits, NDJSON export
+- `/healthz`, `/readyz`, `/metrics`, compose prod profile, `deploy/k8s/`, `docs/ops/runbook-v2.md`
+- Ops dashboard (`static/index.html`) with auth + floors/shadow/econ/p histogram
+- `POST /v1/decide` unified envelope (economics never denies orders)
 
-## Residual fixes in `friction_v2_4`
+## Math (`friction_v3_0`)
 
-- Score calibrator fits **no-floor-raise** rows only (ATO no longer poisons low-score bins).
-- Binning banned on score path; dense-bin clamp if ever re-enabled.
-- Extreme-p gate tightened 0.80 → **0.50** (suite actual ~0.37).
-- External frozen journey pack + CI test.
-- `scripts/fit_calibration_from_labels.py` fail-closed without challenge/clawback provenance.
+- New typologies: `gift_card_drain`, `partner_promo_farm`, `return_to_points`, `trial_referral_farm`
+- Deeper graph similarity/density (size≥5), multi-bucket counter aliases, device-intel ATO channel
+- Score-path L2 Platt + temporal chrono holdout; outcome-cal fail-closed
+- Frozen external pack includes v3 typologies
 
 ## Explicit refusals
 
 - Do **not** cite synth-500k as a grade claim.
 - Do **not** cite `shadow_four_week_sim*.json` as production A+.
 - Production grades remain ops-gated.
-- Synth score-path ECE target is **0.15** (near-separable labels); production outcome-fit keeps **0.08**.
-
-## Math notes (`friction_v2_4`)
-
-- Weights: multi_account 0.34 (graph-only can reach soft without floor).
-- `friction_p_floor`: throttle 0.08 / soft 0.22 / hard 0.38 / block 0.55.
-- `combine_score_and_friction_p` + `p_abuse_cap`.
-- Interaction α sum ≤ 0.35; points reconciled after clip.
+- `LOYALTY_ABUSE_AUTH_DISABLED` is test-only — never in production.

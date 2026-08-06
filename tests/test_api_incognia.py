@@ -6,6 +6,7 @@ from adapters.incognia.normalize import IncogniaSignals, normalize_assessment
 from fastapi.testclient import TestClient
 
 from loyalty_abuse_api.app import create_app
+from tests.api_helpers import authed_client
 
 _INCOGNIA_ENV = (
     "INCOGNIA_CLIENT_ID",

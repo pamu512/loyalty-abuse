@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from loyalty_abuse_api.analytics import build_summary, _floor_raised
 from loyalty_abuse_api.app import create_app
+from tests.api_helpers import authed_client
 
 
 def test_summary_empty(tmp_path):

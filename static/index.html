@@ -3,47 +3,190 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Loyalty Abuse Analytics</title>
+  <title>Loyalty Abuse Ops</title>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 2rem; color: #1a1a1a; }
-    h1 { margin-bottom: 0.25rem; }
-    .meta { color: #555; margin-bottom: 1.5rem; }
-    section { margin-bottom: 2rem; }
-    table { border-collapse: collapse; min-width: 20rem; }
-    th, td { border: 1px solid #ccc; padding: 0.4rem 0.75rem; text-align: left; }
-    th { background: #f4f4f4; }
-    .error { color: #b00020; }
+    :root {
+      --bg: #0f1419;
+      --panel: #1a222c;
+      --text: #e7ecf1;
+      --muted: #8b9aab;
+      --accent: #3d9cf0;
+      --ok: #3ecf8e;
+      --warn: #e6a23c;
+      --line: #2a3542;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, #1b2a3a, var(--bg));
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--line);
+      background: rgba(15,20,25,0.85);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+    }
+    h1 { font-size: 1.15rem; margin: 0; letter-spacing: 0.02em; }
+    .meta { color: var(--muted); font-size: 0.85rem; }
+    .auth {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    input[type="password"], input[type="text"] {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 0.45rem 0.65rem;
+      border-radius: 6px;
+      min-width: 16rem;
+    }
+    button {
+      background: var(--accent);
+      color: #041018;
+      border: 0;
+      border-radius: 6px;
+      padding: 0.45rem 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    main {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      padding: 1.25rem 1.5rem 2rem;
+    }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 1rem 1.1rem 1.2rem;
+      animation: rise 0.45s ease both;
+    }
+    section:nth-child(2) { animation-delay: 0.05s; }
+    section:nth-child(3) { animation-delay: 0.1s; }
+    section:nth-child(4) { animation-delay: 0.15s; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: none; }
+    }
+    h2 {
+      margin: 0 0 0.75rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #c9d6e3;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { padding: 0.35rem 0.25rem; border-bottom: 1px solid var(--line); text-align: left; }
+    th { color: var(--muted); font-weight: 500; }
+    .error { color: #ff6b6b; padding: 1rem 1.5rem; }
+    .pill {
+      display: inline-block;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      background: #243041;
+      color: var(--ok);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .pill.shadow { color: var(--warn); }
+    .bar {
+      height: 8px;
+      background: #243041;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 0.25rem;
+    }
+    .bar > span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #6ad0ff);
+      width: 0;
+      transition: width 0.6s ease;
+    }
   </style>
 </head>
 <body>
-  <h1>Loyalty Abuse Analytics</h1>
-  <p class="meta" id="meta">Loading…</p>
-
-  <section>
-    <h2>Friction mix</h2>
-    <table id="friction-table">
-      <thead><tr><th>Friction</th><th>Count</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </section>
-
-  <section>
-    <h2>Top reasons</h2>
-    <table id="reasons-table">
-      <thead><tr><th>Reason</th><th>Count</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </section>
-
-  <section>
-    <h2>Typology rates</h2>
-    <table id="typology-table">
-      <thead><tr><th>Typology</th><th>Rate</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </section>
-
+  <header>
+    <div>
+      <h1>Loyalty Abuse Ops</h1>
+      <div class="meta" id="meta">Sign in with API key</div>
+    </div>
+    <div class="auth">
+      <input id="api-key" type="password" placeholder="API key (Bearer)" autocomplete="off">
+      <button id="load-btn" type="button">Load</button>
+    </div>
+  </header>
+  <p class="error" id="error" hidden></p>
+  <main id="dashboard" hidden>
+    <section>
+      <h2>Tenant / policy</h2>
+      <div id="tenant-panel"></div>
+    </section>
+    <section>
+      <h2>Friction mix</h2>
+      <table><thead><tr><th>Friction</th><th>Count</th></tr></thead><tbody id="friction-body"></tbody></table>
+    </section>
+    <section>
+      <h2>Floor attribution</h2>
+      <table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody id="floor-body"></tbody></table>
+    </section>
+    <section>
+      <h2>Insult / loss proxies</h2>
+      <table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody id="econ-body"></tbody></table>
+    </section>
+    <section>
+      <h2>Shadow vs live</h2>
+      <div id="shadow-panel"></div>
+    </section>
+    <section>
+      <h2>Top reasons</h2>
+      <table><thead><tr><th>Reason</th><th>Count</th></tr></thead><tbody id="reasons-body"></tbody></table>
+    </section>
+    <section>
+      <h2>Typology rates</h2>
+      <table><thead><tr><th>Typology</th><th>Rate</th></tr></thead><tbody id="typology-body"></tbody></table>
+    </section>
+    <section>
+      <h2>p_abuse histogram</h2>
+      <div id="phist"></div>
+    </section>
+  </main>
   <script>
+    const keyInput = document.getElementById("api-key");
+    const stored = sessionStorage.getItem("la_api_key");
+    if (stored) keyInput.value = stored;
+
+    function headers() {
+      const key = keyInput.value.trim();
+      if (!key) throw new Error("API key required");
+      sessionStorage.setItem("la_api_key", key);
+      return { Authorization: `Bearer ${key}` };
+    }
+
+    function fillPairs(tbody, rows) {
+      tbody.replaceChildren();
+      for (const [k, v] of rows) {
+        const tr = document.createElement("tr");
+        const td1 = document.createElement("td");
+        const td2 = document.createElement("td");
+        td1.textContent = k;
+        td2.textContent = v;
+        tr.append(td1, td2);
+        tbody.append(tr);
+      }
+    }
+
     function fillTable(tbody, rows, cols) {
       tbody.replaceChildren();
       for (const row of rows) {
@@ -58,43 +201,68 @@
     }
 
     async function loadSummary() {
-      const meta = document.getElementById("meta");
+      const err = document.getElementById("error");
+      const dash = document.getElementById("dashboard");
+      err.hidden = true;
       try {
-        const res = await fetch("/v1/analytics/summary");
+        const res = await fetch("/v1/analytics/summary", { headers: headers() });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-
-        meta.textContent = `${data.decision_count} decisions`;
+        dash.hidden = false;
+        const mode = data.evaluation_mode || "unknown";
+        document.getElementById("meta").textContent =
+          `${data.decision_count || 0} decisions · policy ${data.policy_version || "—"}`;
+        document.getElementById("tenant-panel").innerHTML =
+          `<div>Tenant: <strong>${data.tenant_id || "admin/*"}</strong></div>
+           <div style="margin-top:0.5rem">Mode: <span class="pill ${mode === "shadow" ? "shadow" : ""}">${mode}</span>
+           <span class="meta"> (change via PUT /v1/admin/tenants/{id}/mode)</span></div>`;
 
         const frictionRows = Object.entries(data.friction_counts || {})
           .map(([friction, count]) => ({ friction, count }))
           .sort((a, b) => b.count - a.count);
-        fillTable(
-          document.querySelector("#friction-table tbody"),
-          frictionRows,
-          ["friction", "count"]
-        );
+        fillTable(document.getElementById("friction-body"), frictionRows, ["friction", "count"]);
 
-        fillTable(
-          document.querySelector("#reasons-table tbody"),
-          data.top_reasons || [],
-          ["reason", "count"]
-        );
+        fillPairs(document.getElementById("floor-body"), [
+          ["floor_raised_rate", data.floor_raised_rate ?? "—"],
+          ["soft_floor_count", data.soft_floor_count ?? "—"],
+          ["hard_floor_count", data.hard_floor_count ?? "—"],
+        ]);
 
-        const typologyRows = Object.entries(data.typology_rates || {})
-          .map(([typology, rate]) => ({ typology, rate: (rate * 100).toFixed(1) + "%" }))
-          .sort((a, b) => parseFloat(b.rate) - parseFloat(a.rate));
-        fillTable(
-          document.querySelector("#typology-table tbody"),
-          typologyRows,
-          ["typology", "rate"]
-        );
-      } catch (err) {
-        meta.innerHTML = `<span class="error">Failed to load summary: ${err.message}</span>`;
+        fillPairs(document.getElementById("econ-body"), [
+          ["insult_proxy", data.insult_proxy ?? "—"],
+          ["expected_loss_sum", data.expected_loss_sum ?? "—"],
+          ["expected_insult_sum", data.expected_insult_sum ?? "—"],
+          ["intel_success_rate", data.intel_success_rate ?? "—"],
+          ["challenge_fail_rate", data.challenge_fail_rate ?? "—"],
+        ]);
+
+        document.getElementById("shadow-panel").innerHTML =
+          `<div>Shadow logs: <strong>${(data.shadow_log_count != null) ? data.shadow_log_count : "—"}</strong></div>
+           <div class="meta" style="margin-top:0.4rem">Insult proxy uses allow-labeled shadow when present.</div>`;
+
+        fillTable(document.getElementById("reasons-body"), data.top_reasons || [], ["reason", "count"]);
+        const typo = Object.entries(data.typology_rates || {}).map(([typology, rate]) => ({ typology, rate }));
+        fillTable(document.getElementById("typology-body"), typo, ["typology", "rate"]);
+
+        const phist = document.getElementById("phist");
+        phist.replaceChildren();
+        const hist = data.p_abuse_histogram || {};
+        const max = Math.max(1, ...Object.values(hist));
+        for (const [bucket, n] of Object.entries(hist)) {
+          const row = document.createElement("div");
+          row.style.marginBottom = "0.45rem";
+          row.innerHTML = `<div class="meta">${bucket}: ${n}</div><div class="bar"><span style="width:${(100 * n) / max}%"></span></div>`;
+          phist.appendChild(row);
+        }
+      } catch (e) {
+        dash.hidden = true;
+        err.hidden = false;
+        err.textContent = String(e.message || e);
       }
     }
 
-    loadSummary();
+    document.getElementById("load-btn").addEventListener("click", loadSummary);
+    if (stored) loadSummary();
   </script>
 </body>
 </html>

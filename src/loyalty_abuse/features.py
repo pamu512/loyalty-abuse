@@ -259,6 +259,88 @@ class FeatureStore:
             if e.tenant_id == event.tenant_id and _parse_ts(e.ts) <= now
         ]
         graph = cluster_features(tenant_events, event.account_id, now)
+
+        # --- v3 typology signals ---
+        gift_load_burn_minutes = 1e9
+        gift_instruments: set[str] = set()
+        gift_load_event = False
+        for e in acct_events_sorted:
+            if e.tenant_id != event.tenant_id:
+                continue
+            pl = e.payload if isinstance(e.payload, dict) else {}
+            if pl.get("gift_card_load") or pl.get("stored_value_load"):
+                gift_load_event = True
+                load_t = _parse_ts(e.ts)
+                if event.type in {EventType.redeem, EventType.checkout}:
+                    gift_load_burn_minutes = min(
+                        gift_load_burn_minutes,
+                        (now - load_t).total_seconds() / 60.0,
+                    )
+            if e.payment_instrument_hash and (
+                pl.get("gift_card_load")
+                or pl.get("stored_value_load")
+                or e.type == EventType.redeem
+            ):
+                gift_instruments.add(e.payment_instrument_hash)
+        if event.payment_instrument_hash:
+            gift_instruments.add(event.payment_instrument_hash)
+
+        partner_promo = False
+        partner_code = None
+        for c in list(event.payload.get("promo_codes") or []):
+            cs = str(c)
+            if cs.upper().startswith("PARTNER") or cs.upper().startswith("COBRAND"):
+                partner_promo = True
+                partner_code = cs
+                break
+        if event.payload.get("partner_promo"):
+            partner_promo = True
+            partner_code = partner_code or str(event.payload.get("partner_promo"))
+        partner_accounts = 0
+        if partner_code:
+            users: set[str] = set()
+            for e in self._in_window(
+                now, timedelta(hours=24), lambda e: e.tenant_id == event.tenant_id
+            ):
+                codes = [str(x) for x in (e.payload.get("promo_codes") or [])]
+                if partner_code in codes or e.payload.get("partner_promo") == partner_code:
+                    users.add(e.account_id)
+            partner_accounts = len(users)
+
+        return_cycles = 0
+        points_restored = False
+        reburn = False
+        for e in acct_events_sorted:
+            if _parse_ts(e.ts) < now - timedelta(days=7) or _parse_ts(e.ts) > now:
+                continue
+            pl = e.payload if isinstance(e.payload, dict) else {}
+            if pl.get("refund") or pl.get("cancel") or pl.get("points_restored"):
+                if pl.get("points_restored") or pl.get("refund"):
+                    points_restored = True
+                    return_cycles += 1
+            if points_restored and e.type == EventType.redeem and _parse_ts(e.ts) <= now:
+                reburn = True
+        if event.payload.get("points_restored"):
+            points_restored = True
+        if points_restored and event.type == EventType.redeem:
+            reburn = True
+
+        trial_cycles = 0
+        welcome = bool(
+            event.payload.get("welcome_offer")
+            or "welcome" in [str(x).lower() for x in (event.payload.get("offer_ids") or [])]
+        )
+        for e in acct_events_sorted:
+            if _parse_ts(e.ts) < now - timedelta(days=7):
+                continue
+            pl = e.payload if isinstance(e.payload, dict) else {}
+            if e.type == EventType.referral or pl.get("welcome_offer") or pl.get("trial_claim"):
+                trial_cycles += 1
+            if e.type == EventType.signup and pl.get("referral_code"):
+                trial_cycles += 1
+
+        campaign_age_hours = float(event.payload.get("campaign_age_hours") or 0.0)
+
         return {
             "accounts_on_device_1h": accounts_device["1h"],
             "accounts_on_device_24h": accounts_device["24h"],
@@ -291,4 +373,35 @@ class FeatureStore:
             "graph_multi_hop_accounts": graph["graph_multi_hop_accounts"],
             "graph_age_diversity_hours": graph["graph_age_diversity_hours"],
             "graph_shared_attr_rarity": graph["graph_shared_attr_rarity"],
+            "graph_cluster_similarity": graph.get("graph_cluster_similarity", 0.0),
+            "graph_ring_density": graph.get("graph_ring_density", 0.0),
+            "gift_card_load_burn_minutes": gift_load_burn_minutes,
+            "gift_card_instrument_churn": float(len(gift_instruments)),
+            "gift_card_load_event": gift_load_event
+            or bool(payload.get("gift_card_load") or payload.get("stored_value_load")),
+            "partner_promo_code": partner_promo,
+            "partner_code_accounts_24h": partner_accounts,
+            "return_points_cycles_7d": return_cycles,
+            "points_restored_after_refund": points_restored,
+            "reburn_after_restore": reburn,
+            "trial_referral_cycles_7d": trial_cycles,
+            "welcome_offer_claimed": welcome,
+            "promo_campaign_age_hours": campaign_age_hours,
+            # Grab-style multi-bucket conquer aliases (same values; contract for cal/replay)
+            "counter_accounts_device_5m": float(
+                len(
+                    {
+                        e.account_id
+                        for e in self._in_window(
+                            now,
+                            d5m,
+                            lambda e: e.device_id == event.device_id
+                            and e.tenant_id == event.tenant_id,
+                        )
+                    }
+                )
+            ),
+            "counter_accounts_device_1h": float(accounts_device["1h"]),
+            "counter_accounts_device_24h": float(accounts_device["24h"]),
+            "counter_accounts_device_7d": float(accounts_device["7d"]),
         }

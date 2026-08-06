@@ -13,8 +13,8 @@ from ablation_graph import HOUSEHOLD_ALLOW_DROP_MAX_PP, run_ablation  # noqa: E4
 def test_ablation_smoke_small_n():
     report = run_ablation(seed=42, n_per_slice=2)
     assert report["protocol"]["n_per_slice"] == 2
-    assert report["counters_only"]["n"] == 12
-    assert report["counters_plus_graph"]["n"] == 12
+    assert report["counters_only"]["n"] == 20
+    assert report["counters_plus_graph"]["n"] == 20
     assert "household_fp" in report["counters_only"]["slices"]
     assert "household_fp" in report["counters_plus_graph"]["slices"]
     assert report["deltas"]["household_allow_rate_drop_pp"] <= HOUSEHOLD_ALLOW_DROP_MAX_PP

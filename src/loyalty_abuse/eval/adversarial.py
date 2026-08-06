@@ -41,6 +41,10 @@ SLICE_BOUNDS: dict[str, dict[str, Any]] = {
     "sequential_promo": {"metric": "catch_rate", "bound": 0.50},
     "ato_known_device": {"metric": "catch_rate", "bound": 0.50},
     "graph_payment_ring": {"metric": "catch_rate", "bound": 0.70},
+    "gift_card_drain": {"metric": "catch_rate", "bound": 0.60},
+    "partner_promo_farm": {"metric": "catch_rate", "bound": 0.55},
+    "return_to_points": {"metric": "catch_rate", "bound": 0.55},
+    "trial_referral_farm": {"metric": "catch_rate", "bound": 0.55},
 }
 
 
@@ -498,6 +502,226 @@ def gen_graph_payment_ring(i: int, rng: random.Random, base: datetime) -> list[E
     return events
 
 
+def gen_gift_card_drain(i: int, rng: random.Random, base: datetime) -> list[EventEnvelope]:
+    tenant = f"gc_{i}"
+    acct = f"gc_{i}_a0"
+    device = f"dev_gc_{i}"
+    ip = f"30.{i % 200}.1.{rng.randint(1, 250)}"
+    near = rng.random() < 0.25
+    pay1 = f"pay_gc_{i}_1"
+    pay2 = f"pay_gc_{i}_2" if not near else pay1
+    events = [
+        _env(
+            f"s_{i}",
+            tenant=tenant,
+            ts=_ts(base, -120),
+            typ=EventType.signup,
+            account=acct,
+            device=device,
+            ip=ip,
+            email=f"gc{i}@ex.com",
+            payment=pay1,
+        ),
+        _env(
+            f"load_{i}",
+            tenant=tenant,
+            ts=_ts(base, -8 if not near else -400),
+            typ=EventType.checkout,
+            account=acct,
+            device=device,
+            ip=ip,
+            email=f"gc{i}@ex.com",
+            payment=pay1,
+            payload={"gift_card_load": True, "points": 500, "channel": "app"},
+        ),
+        _env(
+            f"r_{i}",
+            tenant=tenant,
+            ts=_ts(base),
+            typ=EventType.redeem,
+            account=acct,
+            device=device,
+            ip=ip,
+            email=f"gc{i}@ex.com",
+            payment=pay2,
+            payload={
+                "reward_id": "r",
+                "points": 400 if not near else 20,
+                "gift_card_load": False,
+                "channel": "app",
+            },
+        ),
+    ]
+    return events
+
+
+def gen_partner_promo_farm(i: int, rng: random.Random, base: datetime) -> list[EventEnvelope]:
+    tenant = f"pp_{i}"
+    code = f"PARTNER{rng.randint(0, 9)}"
+    near = rng.random() < 0.28
+    n = rng.randint(2, 3) if near else rng.randint(5, 9)
+    device = f"dev_pp_{i}"
+    ip = f"31.{i % 200}.2.{rng.randint(1, 250)}"
+    events: list[EventEnvelope] = []
+    for j in range(n):
+        acct = f"pp_{i}_{j}"
+        events.append(
+            _env(
+                f"s_{i}_{j}",
+                tenant=tenant,
+                ts=_ts(base, -60 + j),
+                typ=EventType.signup,
+                account=acct,
+                device=device if not near else f"dev_pp_{i}_{j}",
+                ip=ip,
+                email=f"pp{i}_{j}@ex.com",
+            )
+        )
+        events.append(
+            _env(
+                f"r_{i}_{j}",
+                tenant=tenant,
+                ts=_ts(base, -5 + j * 0.2),
+                typ=EventType.redeem,
+                account=acct,
+                device=device if not near else f"dev_pp_{i}_{j}",
+                ip=ip,
+                email=f"pp{i}_{j}@ex.com",
+                payload={
+                    "promo_codes": [code],
+                    "partner_promo": code,
+                    "points": 15,
+                    "channel": "app",
+                },
+            )
+        )
+    return events
+
+
+def gen_return_to_points(i: int, rng: random.Random, base: datetime) -> list[EventEnvelope]:
+    tenant = f"rp_{i}"
+    acct = f"rp_{i}_a"
+    device = f"dev_rp_{i}"
+    ip = f"32.{i % 200}.3.{rng.randint(1, 250)}"
+    near = rng.random() < 0.3
+    cycles = 1 if near else rng.randint(2, 4)
+    events = [
+        _env(
+            f"s_{i}",
+            tenant=tenant,
+            ts=_ts(base, -1000),
+            typ=EventType.signup,
+            account=acct,
+            device=device,
+            ip=ip,
+            email=f"rp{i}@ex.com",
+        )
+    ]
+    for c in range(cycles):
+        events.append(
+            _env(
+                f"ref_{i}_{c}",
+                tenant=tenant,
+                ts=_ts(base, -200 + c * 40),
+                typ=EventType.checkout,
+                account=acct,
+                device=device,
+                ip=ip,
+                email=f"rp{i}@ex.com",
+                payload={"refund": True, "points_restored": True, "points": 50},
+            )
+        )
+        events.append(
+            _env(
+                f"rb_{i}_{c}",
+                tenant=tenant,
+                ts=_ts(base, -180 + c * 40),
+                typ=EventType.redeem,
+                account=acct,
+                device=device,
+                ip=ip,
+                email=f"rp{i}@ex.com",
+                payload={"points": 40, "channel": "app"},
+            )
+        )
+    events.append(
+        _env(
+            f"r_{i}",
+            tenant=tenant,
+            ts=_ts(base),
+            typ=EventType.redeem,
+            account=acct,
+            device=device,
+            ip=ip,
+            email=f"rp{i}@ex.com",
+            payload={"points": 30, "points_restored": True, "channel": "app"},
+        )
+    )
+    return events
+
+
+def gen_trial_referral_farm(i: int, rng: random.Random, base: datetime) -> list[EventEnvelope]:
+    tenant = f"tr_{i}"
+    device = f"dev_tr_{i}"
+    ip = f"33.{i % 200}.4.{rng.randint(1, 250)}"
+    near = rng.random() < 0.3
+    n = rng.randint(2, 3) if near else rng.randint(4, 7)
+    events: list[EventEnvelope] = []
+    for j in range(n):
+        acct = f"tr_{i}_{j}"
+        events.append(
+            _env(
+                f"s_{i}_{j}",
+                tenant=tenant,
+                ts=_ts(base, -80 + j * 5),
+                typ=EventType.signup,
+                account=acct,
+                device=device,
+                ip=ip,
+                email=f"tr{i}_{j}@ex.com",
+                payload={"referral_code": f"REF{i}", "welcome_offer": True},
+            )
+        )
+        events.append(
+            _env(
+                f"ref_{i}_{j}",
+                tenant=tenant,
+                ts=_ts(base, -40 + j * 3),
+                typ=EventType.referral,
+                account=acct,
+                device=device,
+                ip=ip,
+                email=f"tr{i}_{j}@ex.com",
+                payload={
+                    "referrer_id": f"tr_{i}_0",
+                    "referee_id": acct,
+                    "welcome_offer": True,
+                    "trial_claim": True,
+                },
+            )
+        )
+    last = f"tr_{i}_{n - 1}"
+    events.append(
+        _env(
+            f"r_{i}",
+            tenant=tenant,
+            ts=_ts(base),
+            typ=EventType.redeem,
+            account=last,
+            device=device,
+            ip=ip,
+            email=f"tr{i}_{n - 1}@ex.com",
+            payload={
+                "offer_ids": ["welcome"],
+                "welcome_offer": True,
+                "points": 25,
+                "channel": "app",
+            },
+        )
+    )
+    return events
+
+
 GENERATORS: dict[str, Callable[[int, random.Random, datetime], list[EventEnvelope]]] = {
     "household_fp": gen_household_fp,
     "device_rotation": gen_device_rotation,
@@ -505,6 +729,10 @@ GENERATORS: dict[str, Callable[[int, random.Random, datetime], list[EventEnvelop
     "sequential_promo": gen_sequential_promo,
     "ato_known_device": gen_ato_known_device,
     "graph_payment_ring": gen_graph_payment_ring,
+    "gift_card_drain": gen_gift_card_drain,
+    "partner_promo_farm": gen_partner_promo_farm,
+    "return_to_points": gen_return_to_points,
+    "trial_referral_farm": gen_trial_referral_farm,
 }
 
 
@@ -579,6 +807,10 @@ def run_suite(seed: int = 42, n_per_slice: int = N_PER_SLICE) -> dict[str, Any]:
         "sequential_promo",
         "ato_known_device",
         "graph_payment_ring",
+        "gift_card_drain",
+        "partner_promo_farm",
+        "return_to_points",
+        "trial_referral_farm",
     )
     uniq = sum(1 for n in abuse_names if slices[n]["unique_scores"] >= 2)
     gates["score_diversity"] = {

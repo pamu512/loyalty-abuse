@@ -84,9 +84,9 @@
       }
     ],
     "snapshot_at_freeze": {
-      "score": 10,
+      "score": 9,
       "friction": "allow",
-      "p_abuse": 0.2953
+      "p_abuse": 0.2764
     }
   },
   {
@@ -188,9 +188,9 @@
       }
     ],
     "snapshot_at_freeze": {
-      "score": 7,
+      "score": 6,
       "friction": "allow",
-      "p_abuse": 0.2408
+      "p_abuse": 0.2243
     }
   },
   {
@@ -956,8 +956,8 @@
       }
     ],
     "snapshot_at_freeze": {
-      "score": 75,
-      "friction": "block",
+      "score": 59,
+      "friction": "hard_challenge",
       "p_abuse": 0.97
     }
   },
@@ -1184,9 +1184,9 @@
       }
     ],
     "snapshot_at_freeze": {
-      "score": 56,
-      "friction": "hard_challenge",
-      "p_abuse": 0.97
+      "score": 44,
+      "friction": "soft_challenge",
+      "p_abuse": 0.9281
     }
   },
   {
@@ -2405,8 +2405,8 @@
       }
     ],
     "snapshot_at_freeze": {
-      "score": 82,
-      "friction": "block",
+      "score": 65,
+      "friction": "hard_challenge",
       "p_abuse": 0.97
     }
   },
@@ -2492,9 +2492,9 @@
       }
     ],
     "snapshot_at_freeze": {
-      "score": 13,
+      "score": 8,
       "friction": "hard_challenge",
-      "p_abuse": 0.601
+      "p_abuse": 0.5401
     }
   },
   {
@@ -2893,9 +2893,754 @@
       }
     ],
     "snapshot_at_freeze": {
-      "score": 34,
+      "score": 30,
       "friction": "soft_challenge",
-      "p_abuse": 0.8405
+      "p_abuse": 0.7882
+    }
+  },
+  {
+    "id": "ext_gift_card_drain_1",
+    "label": "gift_card_drain",
+    "frozen_from": {
+      "generator": "gift_card_drain",
+      "index": 1,
+      "seed": 7001
+    },
+    "expect": {
+      "min_friction": "soft_challenge"
+    },
+    "events": [
+      {
+        "event_id": "s_1",
+        "tenant_id": "gc_1",
+        "ts": "2026-08-05T10:00:00Z",
+        "type": "signup",
+        "account_id": "gc_1_a0",
+        "session_id": "sess_gc_1_a0",
+        "device_id": "dev_gc_1",
+        "ip": "30.1.1.31",
+        "email": "gc1@ex.com",
+        "phone": null,
+        "payment_instrument_hash": "pay_gc_1_1",
+        "payload": {}
+      },
+      {
+        "event_id": "load_1",
+        "tenant_id": "gc_1",
+        "ts": "2026-08-05T11:52:00Z",
+        "type": "checkout",
+        "account_id": "gc_1_a0",
+        "session_id": "sess_gc_1_a0",
+        "device_id": "dev_gc_1",
+        "ip": "30.1.1.31",
+        "email": "gc1@ex.com",
+        "phone": null,
+        "payment_instrument_hash": "pay_gc_1_1",
+        "payload": {
+          "gift_card_load": true,
+          "points": 500,
+          "channel": "app"
+        }
+      },
+      {
+        "event_id": "r_1",
+        "tenant_id": "gc_1",
+        "ts": "2026-08-05T12:00:00Z",
+        "type": "redeem",
+        "account_id": "gc_1_a0",
+        "session_id": "sess_gc_1_a0",
+        "device_id": "dev_gc_1",
+        "ip": "30.1.1.31",
+        "email": "gc1@ex.com",
+        "phone": null,
+        "payment_instrument_hash": "pay_gc_1_2",
+        "payload": {
+          "reward_id": "r",
+          "points": 400,
+          "gift_card_load": false,
+          "channel": "app"
+        }
+      }
+    ],
+    "snapshot_at_freeze": {
+      "score": 8,
+      "friction": "soft_challenge",
+      "p_abuse": 0.4214
+    }
+  },
+  {
+    "id": "ext_partner_promo_farm_2",
+    "label": "partner_promo_farm",
+    "frozen_from": {
+      "generator": "partner_promo_farm",
+      "index": 2,
+      "seed": 8001
+    },
+    "expect": {
+      "min_friction": "soft_challenge"
+    },
+    "events": [
+      {
+        "event_id": "s_2_0",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:00:00Z",
+        "type": "signup",
+        "account_id": "pp_2_0",
+        "session_id": "sess_pp_2_0",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_0@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {}
+      },
+      {
+        "event_id": "r_2_0",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:55:00Z",
+        "type": "redeem",
+        "account_id": "pp_2_0",
+        "session_id": "sess_pp_2_0",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_0@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "promo_codes": [
+            "PARTNER9"
+          ],
+          "partner_promo": "PARTNER9",
+          "points": 15,
+          "channel": "app"
+        }
+      },
+      {
+        "event_id": "s_2_1",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:01:00Z",
+        "type": "signup",
+        "account_id": "pp_2_1",
+        "session_id": "sess_pp_2_1",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_1@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {}
+      },
+      {
+        "event_id": "r_2_1",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:55:12Z",
+        "type": "redeem",
+        "account_id": "pp_2_1",
+        "session_id": "sess_pp_2_1",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_1@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "promo_codes": [
+            "PARTNER9"
+          ],
+          "partner_promo": "PARTNER9",
+          "points": 15,
+          "channel": "app"
+        }
+      },
+      {
+        "event_id": "s_2_2",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:02:00Z",
+        "type": "signup",
+        "account_id": "pp_2_2",
+        "session_id": "sess_pp_2_2",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_2@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {}
+      },
+      {
+        "event_id": "r_2_2",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:55:24Z",
+        "type": "redeem",
+        "account_id": "pp_2_2",
+        "session_id": "sess_pp_2_2",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_2@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "promo_codes": [
+            "PARTNER9"
+          ],
+          "partner_promo": "PARTNER9",
+          "points": 15,
+          "channel": "app"
+        }
+      },
+      {
+        "event_id": "s_2_3",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:03:00Z",
+        "type": "signup",
+        "account_id": "pp_2_3",
+        "session_id": "sess_pp_2_3",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_3@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {}
+      },
+      {
+        "event_id": "r_2_3",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:55:36Z",
+        "type": "redeem",
+        "account_id": "pp_2_3",
+        "session_id": "sess_pp_2_3",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_3@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "promo_codes": [
+            "PARTNER9"
+          ],
+          "partner_promo": "PARTNER9",
+          "points": 15,
+          "channel": "app"
+        }
+      },
+      {
+        "event_id": "s_2_4",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:04:00Z",
+        "type": "signup",
+        "account_id": "pp_2_4",
+        "session_id": "sess_pp_2_4",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_4@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {}
+      },
+      {
+        "event_id": "r_2_4",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:55:48Z",
+        "type": "redeem",
+        "account_id": "pp_2_4",
+        "session_id": "sess_pp_2_4",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_4@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "promo_codes": [
+            "PARTNER9"
+          ],
+          "partner_promo": "PARTNER9",
+          "points": 15,
+          "channel": "app"
+        }
+      },
+      {
+        "event_id": "s_2_5",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:05:00Z",
+        "type": "signup",
+        "account_id": "pp_2_5",
+        "session_id": "sess_pp_2_5",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_5@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {}
+      },
+      {
+        "event_id": "r_2_5",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:56:00Z",
+        "type": "redeem",
+        "account_id": "pp_2_5",
+        "session_id": "sess_pp_2_5",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_5@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "promo_codes": [
+            "PARTNER9"
+          ],
+          "partner_promo": "PARTNER9",
+          "points": 15,
+          "channel": "app"
+        }
+      },
+      {
+        "event_id": "s_2_6",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:06:00Z",
+        "type": "signup",
+        "account_id": "pp_2_6",
+        "session_id": "sess_pp_2_6",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_6@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {}
+      },
+      {
+        "event_id": "r_2_6",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:56:12Z",
+        "type": "redeem",
+        "account_id": "pp_2_6",
+        "session_id": "sess_pp_2_6",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_6@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "promo_codes": [
+            "PARTNER9"
+          ],
+          "partner_promo": "PARTNER9",
+          "points": 15,
+          "channel": "app"
+        }
+      },
+      {
+        "event_id": "s_2_7",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:07:00Z",
+        "type": "signup",
+        "account_id": "pp_2_7",
+        "session_id": "sess_pp_2_7",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_7@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {}
+      },
+      {
+        "event_id": "r_2_7",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:56:24Z",
+        "type": "redeem",
+        "account_id": "pp_2_7",
+        "session_id": "sess_pp_2_7",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_7@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "promo_codes": [
+            "PARTNER9"
+          ],
+          "partner_promo": "PARTNER9",
+          "points": 15,
+          "channel": "app"
+        }
+      },
+      {
+        "event_id": "s_2_8",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:08:00Z",
+        "type": "signup",
+        "account_id": "pp_2_8",
+        "session_id": "sess_pp_2_8",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_8@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {}
+      },
+      {
+        "event_id": "r_2_8",
+        "tenant_id": "pp_2",
+        "ts": "2026-08-05T11:56:36Z",
+        "type": "redeem",
+        "account_id": "pp_2_8",
+        "session_id": "sess_pp_2_8",
+        "device_id": "dev_pp_2",
+        "ip": "31.2.2.189",
+        "email": "pp2_8@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "promo_codes": [
+            "PARTNER9"
+          ],
+          "partner_promo": "PARTNER9",
+          "points": 15,
+          "channel": "app"
+        }
+      }
+    ],
+    "snapshot_at_freeze": {
+      "score": 43,
+      "friction": "soft_challenge",
+      "p_abuse": 0.9218
+    }
+  },
+  {
+    "id": "ext_return_to_points_3",
+    "label": "return_to_points",
+    "frozen_from": {
+      "generator": "return_to_points",
+      "index": 3,
+      "seed": 9001
+    },
+    "expect": {
+      "min_friction": "soft_challenge"
+    },
+    "events": [
+      {
+        "event_id": "s_3",
+        "tenant_id": "rp_3",
+        "ts": "2026-08-04T19:20:00Z",
+        "type": "signup",
+        "account_id": "rp_3_a",
+        "session_id": "sess_rp_3_a",
+        "device_id": "dev_rp_3",
+        "ip": "32.3.3.10",
+        "email": "rp3@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {}
+      },
+      {
+        "event_id": "ref_3_0",
+        "tenant_id": "rp_3",
+        "ts": "2026-08-05T08:40:00Z",
+        "type": "checkout",
+        "account_id": "rp_3_a",
+        "session_id": "sess_rp_3_a",
+        "device_id": "dev_rp_3",
+        "ip": "32.3.3.10",
+        "email": "rp3@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "refund": true,
+          "points_restored": true,
+          "points": 50
+        }
+      },
+      {
+        "event_id": "rb_3_0",
+        "tenant_id": "rp_3",
+        "ts": "2026-08-05T09:00:00Z",
+        "type": "redeem",
+        "account_id": "rp_3_a",
+        "session_id": "sess_rp_3_a",
+        "device_id": "dev_rp_3",
+        "ip": "32.3.3.10",
+        "email": "rp3@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "points": 40,
+          "channel": "app"
+        }
+      },
+      {
+        "event_id": "ref_3_1",
+        "tenant_id": "rp_3",
+        "ts": "2026-08-05T09:20:00Z",
+        "type": "checkout",
+        "account_id": "rp_3_a",
+        "session_id": "sess_rp_3_a",
+        "device_id": "dev_rp_3",
+        "ip": "32.3.3.10",
+        "email": "rp3@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "refund": true,
+          "points_restored": true,
+          "points": 50
+        }
+      },
+      {
+        "event_id": "rb_3_1",
+        "tenant_id": "rp_3",
+        "ts": "2026-08-05T09:40:00Z",
+        "type": "redeem",
+        "account_id": "rp_3_a",
+        "session_id": "sess_rp_3_a",
+        "device_id": "dev_rp_3",
+        "ip": "32.3.3.10",
+        "email": "rp3@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "points": 40,
+          "channel": "app"
+        }
+      },
+      {
+        "event_id": "r_3",
+        "tenant_id": "rp_3",
+        "ts": "2026-08-05T12:00:00Z",
+        "type": "redeem",
+        "account_id": "rp_3_a",
+        "session_id": "sess_rp_3_a",
+        "device_id": "dev_rp_3",
+        "ip": "32.3.3.10",
+        "email": "rp3@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "points": 30,
+          "points_restored": true,
+          "channel": "app"
+        }
+      }
+    ],
+    "snapshot_at_freeze": {
+      "score": 8,
+      "friction": "soft_challenge",
+      "p_abuse": 0.4214
+    }
+  },
+  {
+    "id": "ext_trial_referral_farm_4",
+    "label": "trial_referral_farm",
+    "frozen_from": {
+      "generator": "trial_referral_farm",
+      "index": 4,
+      "seed": 9101
+    },
+    "expect": {
+      "min_friction": "soft_challenge"
+    },
+    "events": [
+      {
+        "event_id": "s_4_0",
+        "tenant_id": "tr_4",
+        "ts": "2026-08-05T10:40:00Z",
+        "type": "signup",
+        "account_id": "tr_4_0",
+        "session_id": "sess_tr_4_0",
+        "device_id": "dev_tr_4",
+        "ip": "33.4.4.248",
+        "email": "tr4_0@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "referral_code": "REF4",
+          "welcome_offer": true
+        }
+      },
+      {
+        "event_id": "ref_4_0",
+        "tenant_id": "tr_4",
+        "ts": "2026-08-05T11:20:00Z",
+        "type": "referral",
+        "account_id": "tr_4_0",
+        "session_id": "sess_tr_4_0",
+        "device_id": "dev_tr_4",
+        "ip": "33.4.4.248",
+        "email": "tr4_0@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "referrer_id": "tr_4_0",
+          "referee_id": "tr_4_0",
+          "welcome_offer": true,
+          "trial_claim": true
+        }
+      },
+      {
+        "event_id": "s_4_1",
+        "tenant_id": "tr_4",
+        "ts": "2026-08-05T10:45:00Z",
+        "type": "signup",
+        "account_id": "tr_4_1",
+        "session_id": "sess_tr_4_1",
+        "device_id": "dev_tr_4",
+        "ip": "33.4.4.248",
+        "email": "tr4_1@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "referral_code": "REF4",
+          "welcome_offer": true
+        }
+      },
+      {
+        "event_id": "ref_4_1",
+        "tenant_id": "tr_4",
+        "ts": "2026-08-05T11:23:00Z",
+        "type": "referral",
+        "account_id": "tr_4_1",
+        "session_id": "sess_tr_4_1",
+        "device_id": "dev_tr_4",
+        "ip": "33.4.4.248",
+        "email": "tr4_1@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "referrer_id": "tr_4_0",
+          "referee_id": "tr_4_1",
+          "welcome_offer": true,
+          "trial_claim": true
+        }
+      },
+      {
+        "event_id": "s_4_2",
+        "tenant_id": "tr_4",
+        "ts": "2026-08-05T10:50:00Z",
+        "type": "signup",
+        "account_id": "tr_4_2",
+        "session_id": "sess_tr_4_2",
+        "device_id": "dev_tr_4",
+        "ip": "33.4.4.248",
+        "email": "tr4_2@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "referral_code": "REF4",
+          "welcome_offer": true
+        }
+      },
+      {
+        "event_id": "ref_4_2",
+        "tenant_id": "tr_4",
+        "ts": "2026-08-05T11:26:00Z",
+        "type": "referral",
+        "account_id": "tr_4_2",
+        "session_id": "sess_tr_4_2",
+        "device_id": "dev_tr_4",
+        "ip": "33.4.4.248",
+        "email": "tr4_2@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "referrer_id": "tr_4_0",
+          "referee_id": "tr_4_2",
+          "welcome_offer": true,
+          "trial_claim": true
+        }
+      },
+      {
+        "event_id": "s_4_3",
+        "tenant_id": "tr_4",
+        "ts": "2026-08-05T10:55:00Z",
+        "type": "signup",
+        "account_id": "tr_4_3",
+        "session_id": "sess_tr_4_3",
+        "device_id": "dev_tr_4",
+        "ip": "33.4.4.248",
+        "email": "tr4_3@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "referral_code": "REF4",
+          "welcome_offer": true
+        }
+      },
+      {
+        "event_id": "ref_4_3",
+        "tenant_id": "tr_4",
+        "ts": "2026-08-05T11:29:00Z",
+        "type": "referral",
+        "account_id": "tr_4_3",
+        "session_id": "sess_tr_4_3",
+        "device_id": "dev_tr_4",
+        "ip": "33.4.4.248",
+        "email": "tr4_3@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "referrer_id": "tr_4_0",
+          "referee_id": "tr_4_3",
+          "welcome_offer": true,
+          "trial_claim": true
+        }
+      },
+      {
+        "event_id": "s_4_4",
+        "tenant_id": "tr_4",
+        "ts": "2026-08-05T11:00:00Z",
+        "type": "signup",
+        "account_id": "tr_4_4",
+        "session_id": "sess_tr_4_4",
+        "device_id": "dev_tr_4",
+        "ip": "33.4.4.248",
+        "email": "tr4_4@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "referral_code": "REF4",
+          "welcome_offer": true
+        }
+      },
+      {
+        "event_id": "ref_4_4",
+        "tenant_id": "tr_4",
+        "ts": "2026-08-05T11:32:00Z",
+        "type": "referral",
+        "account_id": "tr_4_4",
+        "session_id": "sess_tr_4_4",
+        "device_id": "dev_tr_4",
+        "ip": "33.4.4.248",
+        "email": "tr4_4@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "referrer_id": "tr_4_0",
+          "referee_id": "tr_4_4",
+          "welcome_offer": true,
+          "trial_claim": true
+        }
+      },
+      {
+        "event_id": "r_4",
+        "tenant_id": "tr_4",
+        "ts": "2026-08-05T12:00:00Z",
+        "type": "redeem",
+        "account_id": "tr_4_4",
+        "session_id": "sess_tr_4_4",
+        "device_id": "dev_tr_4",
+        "ip": "33.4.4.248",
+        "email": "tr4_4@ex.com",
+        "phone": null,
+        "payment_instrument_hash": null,
+        "payload": {
+          "offer_ids": [
+            "welcome"
+          ],
+          "welcome_offer": true,
+          "points": 25,
+          "channel": "app"
+        }
+      }
+    ],
+    "snapshot_at_freeze": {
+      "score": 37,
+      "friction": "soft_challenge",
+      "p_abuse": 0.873
     }
   }
 ]

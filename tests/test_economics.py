@@ -89,8 +89,8 @@ def test_evaluate_sets_expected_fields():
         },
     )
     d = evaluate(e, store)
-    assert d.policy_version == "friction_v2_4"
-    assert d.schema_version == 2
+    assert d.policy_version == "friction_v3_0"
+    assert d.schema_version == 3
     assert d.friction != FrictionAction.allow
     assert d.score > 0
     liab = liability_usd(e)

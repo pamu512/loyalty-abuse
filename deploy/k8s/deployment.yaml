@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loyalty-abuse
+  labels:
+    app: loyalty-abuse
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: loyalty-abuse
+  template:
+    metadata:
+      labels:
+        app: loyalty-abuse
+    spec:
+      containers:
+        - name: api
+          image: loyalty-abuse:v2
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: LOYALTY_ABUSE_DB
+              value: /data/loyalty.db
+            - name: LOYALTY_ABUSE_BOOTSTRAP_ADMIN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: loyalty-abuse-secrets
+                  key: bootstrap_admin_key
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+      volumes:
+        - name: data
+          emptyDir: {}

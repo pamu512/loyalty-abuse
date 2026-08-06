@@ -33,7 +33,9 @@ from loyalty_abuse.eval.cost_thresholds import (  # noqa: E402
 from loyalty_abuse.features import FeatureStore  # noqa: E402
 from loyalty_abuse.score import evaluate  # noqa: E402
 
-LABEL_PROVENANCE = "synthetic red-team+chronological score-path-only 2026-08-06"
+LABEL_PROVENANCE = (
+    "synthetic red-team+chronological score-path-only temporal-holdout 2026-08-06"
+)
 # Synth score-path labels are near-separable; smooth L2 Platt cannot hit 0.05 ECE
 # without becoming a step. Production outcome-fit keeps the tighter 0.08 target.
 ECE_TARGET = 0.15
@@ -67,7 +69,8 @@ def _chronological_rows(seed: int, synth_n: int = 300) -> list[dict[str, Any]]:
     labels = synth_eval._alloc(synth_n, rng)
     rows: list[dict[str, Any]] = []
     for idx, label in enumerate(labels):
-        day_base = base.replace(day=1 + (idx % 28))
+        day = 1 + (idx % 28)
+        day_base = base.replace(day=day)
         subj = synth_eval.GENERATORS[label](idx, rng, day_base)
         store = FeatureStore()
         for e in subj.events[:-1]:
@@ -85,6 +88,7 @@ def _chronological_rows(seed: int, synth_n: int = 300) -> list[dict[str, Any]]:
                 "source": "chronological_synth",
                 "band_friction": (d.features_snapshot or {}).get("band_friction"),
                 "floor_min": _floor_min_from_decision(d),
+                "day": day,
             }
         )
     return rows
@@ -94,6 +98,18 @@ def _mixed_rows(seed: int, synth_n: int = 300) -> list[dict[str, Any]]:
     return build_adversarial_labeled_rows(seed) + _chronological_rows(seed, synth_n)
 
 
+def _temporal_split(
+    rows: list[dict[str, Any]], *, fit_day_max: int = 14
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Chronological temporal holdout: early days fit, later days report."""
+    chrono = [r for r in rows if r.get("source") == "chronological_synth"]
+    adv = [r for r in rows if r.get("source") != "chronological_synth"]
+    fit_c = [r for r in chrono if int(r.get("day") or 0) <= fit_day_max]
+    rep_c = [r for r in chrono if int(r.get("day") or 0) > fit_day_max]
+    # Keep adversarial in both for score diversity; temporal claim is on chrono.
+    return adv + fit_c, adv + rep_c
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--fit-seed", type=int, default=7)
@@ -101,17 +117,17 @@ def main() -> int:
     p.add_argument(
         "--out",
         type=Path,
-        default=ROOT / "src" / "loyalty_abuse" / "calibration" / "platt_v2_4.json",
+        default=ROOT / "src" / "loyalty_abuse" / "calibration" / "platt_v3_0.json",
     )
     p.add_argument(
         "--metrics-out",
         type=Path,
-        default=ROOT / "artifacts" / "calibration_v2_4.json",
+        default=ROOT / "artifacts" / "calibration_v3_0.json",
     )
     args = p.parse_args()
 
-    fit_rows = _score_path_rows(_mixed_rows(args.fit_seed))
-    report_rows = _score_path_rows(_mixed_rows(args.report_seed))
+    fit_rows = _score_path_rows(_temporal_split(_mixed_rows(args.fit_seed))[0])
+    report_rows = _score_path_rows(_temporal_split(_mixed_rows(args.report_seed))[1])
     if len(fit_rows) < MIN_FIT_ROWS or len(report_rows) < MIN_FIT_ROWS:
         print(
             json.dumps(
@@ -148,7 +164,7 @@ def main() -> int:
     )
 
     payload: dict[str, Any] = {
-        "version": "platt_v2_4",
+        "version": "platt_v3_0",
         "method": method,
         "a": a,
         "b": b,

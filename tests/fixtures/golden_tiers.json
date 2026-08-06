@@ -26,10 +26,16 @@
         "payload": {
           "reward_id": "r",
           "points": 10,
-          "offer_ids": ["one"],
+          "offer_ids": [
+            "one"
+          ],
           "channel": "app"
         }
       }
+    ],
+    "expected_score_range": [
+      0,
+      5
     ]
   },
   {
@@ -82,10 +88,16 @@
         "payload": {
           "reward_id": "r",
           "points": 10,
-          "offer_ids": ["one"],
+          "offer_ids": [
+            "one"
+          ],
           "channel": "app"
         }
       }
+    ],
+    "expected_score_range": [
+      14,
+      24
     ]
   },
   {
@@ -132,6 +144,10 @@
           "referee_id": "ree"
         }
       }
+    ],
+    "expected_score_range": [
+      9,
+      19
     ]
   },
   {
@@ -175,7 +191,9 @@
         "device_id": "new",
         "ip": "9.9.9.9",
         "payload": {
-          "fields_changed": ["email"]
+          "fields_changed": [
+            "email"
+          ]
         }
       },
       {
@@ -194,13 +212,20 @@
           "channel": "app"
         }
       }
+    ],
+    "expected_score_range": [
+      7,
+      17
     ]
   },
   {
     "name": "soft_challenge_stacked_signals",
-    "expected_friction": "hard_challenge",
+    "expected_friction": "soft_challenge",
     "expected_reason_substring": "bot.redeem_velocity",
-    "expected_reason_substrings": ["bot.redeem_velocity", "promo.stack_depth"],
+    "expected_reason_substrings": [
+      "bot.redeem_velocity",
+      "promo.stack_depth"
+    ],
     "events": [
       {
         "event_id": "s1",
@@ -247,7 +272,12 @@
         "session_id": "s1",
         "device_id": "botdev",
         "ip": "1.1.1.1",
-        "payload": {"reward_id": "r", "points": 1, "offer_ids": [], "channel": "app"}
+        "payload": {
+          "reward_id": "r",
+          "points": 1,
+          "offer_ids": [],
+          "channel": "app"
+        }
       },
       {
         "event_id": "r2",
@@ -258,7 +288,12 @@
         "session_id": "s1",
         "device_id": "botdev",
         "ip": "1.1.1.1",
-        "payload": {"reward_id": "r", "points": 1, "offer_ids": [], "channel": "app"}
+        "payload": {
+          "reward_id": "r",
+          "points": 1,
+          "offer_ids": [],
+          "channel": "app"
+        }
       },
       {
         "event_id": "r3",
@@ -269,7 +304,12 @@
         "session_id": "s1",
         "device_id": "botdev",
         "ip": "1.1.1.1",
-        "payload": {"reward_id": "r", "points": 1, "offer_ids": [], "channel": "app"}
+        "payload": {
+          "reward_id": "r",
+          "points": 1,
+          "offer_ids": [],
+          "channel": "app"
+        }
       },
       {
         "event_id": "r4",
@@ -280,7 +320,12 @@
         "session_id": "s1",
         "device_id": "botdev",
         "ip": "1.1.1.1",
-        "payload": {"reward_id": "r", "points": 1, "offer_ids": [], "channel": "app"}
+        "payload": {
+          "reward_id": "r",
+          "points": 1,
+          "offer_ids": [],
+          "channel": "app"
+        }
       },
       {
         "event_id": "r5",
@@ -291,7 +336,12 @@
         "session_id": "s1",
         "device_id": "botdev",
         "ip": "1.1.1.1",
-        "payload": {"reward_id": "r", "points": 1, "offer_ids": [], "channel": "app"}
+        "payload": {
+          "reward_id": "r",
+          "points": 1,
+          "offer_ids": [],
+          "channel": "app"
+        }
       },
       {
         "event_id": "r6",
@@ -302,7 +352,12 @@
         "session_id": "s1",
         "device_id": "botdev",
         "ip": "1.1.1.1",
-        "payload": {"reward_id": "r", "points": 1, "offer_ids": [], "channel": "app"}
+        "payload": {
+          "reward_id": "r",
+          "points": 1,
+          "offer_ids": [],
+          "channel": "app"
+        }
       },
       {
         "event_id": "r7",
@@ -313,7 +368,12 @@
         "session_id": "s1",
         "device_id": "botdev",
         "ip": "1.1.1.1",
-        "payload": {"reward_id": "r", "points": 1, "offer_ids": [], "channel": "app"}
+        "payload": {
+          "reward_id": "r",
+          "points": 1,
+          "offer_ids": [],
+          "channel": "app"
+        }
       },
       {
         "event_id": "r8",
@@ -324,7 +384,12 @@
         "session_id": "s1",
         "device_id": "botdev",
         "ip": "1.1.1.1",
-        "payload": {"reward_id": "r", "points": 1, "offer_ids": [], "channel": "app"}
+        "payload": {
+          "reward_id": "r",
+          "points": 1,
+          "offer_ids": [],
+          "channel": "app"
+        }
       },
       {
         "event_id": "r9",
@@ -335,7 +400,12 @@
         "session_id": "s1",
         "device_id": "botdev",
         "ip": "1.1.1.1",
-        "payload": {"reward_id": "r", "points": 1, "offer_ids": [], "channel": "app"}
+        "payload": {
+          "reward_id": "r",
+          "points": 1,
+          "offer_ids": [],
+          "channel": "app"
+        }
       },
       {
         "event_id": "r10",
@@ -349,12 +419,21 @@
         "payload": {
           "reward_id": "r",
           "points": 1,
-          "offer_ids": ["o1", "o2"],
-          "promo_codes": ["p1"],
+          "offer_ids": [
+            "o1",
+            "o2"
+          ],
+          "promo_codes": [
+            "p1"
+          ],
           "discount_pct": 50,
           "channel": "app"
         }
       }
+    ],
+    "expected_score_range": [
+      38,
+      48
     ]
   }
 ]

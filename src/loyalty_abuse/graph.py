@@ -81,6 +81,8 @@ def cluster_features(
             "graph_multi_hop_accounts": 0.0,
             "graph_age_diversity_hours": 0.0,
             "graph_shared_attr_rarity": 0.0,
+            "graph_cluster_similarity": 0.0,
+            "graph_ring_density": 0.0,
         }
 
     # account–account adjacency via shared attrs (attrs with ≥2 accounts).
@@ -142,9 +144,40 @@ def cluster_features(
             rarities.append(1.0 / float(n))
     rarity = min(rarities) if rarities else 0.0
 
+    # Jaccard-like similarity: shared strong attrs vs union of attrs touching cluster.
+    strong_kinds = {"device", "phone", "pay"}
+    acct_attrs: dict[str, set[tuple[str, str]]] = defaultdict(set)
+    for key, accts in attr_accounts.items():
+        for a in accts:
+            if a in cluster:
+                acct_attrs[a].add(key)
+    seed_attrs = acct_attrs.get(account_id, set())
+    sim_scores: list[float] = []
+    for a in cluster:
+        if a == account_id:
+            continue
+        other = acct_attrs.get(a, set())
+        if not seed_attrs and not other:
+            continue
+        inter = seed_attrs & other
+        union = seed_attrs | other
+        # Weight strong attr overlap higher.
+        strong_inter = sum(1 for k in inter if k[0] in strong_kinds)
+        j = len(inter) / max(len(union), 1)
+        sim_scores.append(min(1.0, j + 0.15 * strong_inter))
+    similarity = max(sim_scores) if sim_scores else 0.0
+
+    # Ring density: edges / possible pairs in cluster.
+    n = len(cluster)
+    edge_count = sum(len(adj.get(a, ())) for a in cluster) // 2
+    possible = n * (n - 1) / 2.0 if n >= 2 else 0.0
+    density = (edge_count / possible) if possible else 0.0
+
     return {
         "graph_cluster_size": float(len(cluster)),
         "graph_multi_hop_accounts": float(len(multi_hop)),
         "graph_age_diversity_hours": age_div,
         "graph_shared_attr_rarity": rarity,
+        "graph_cluster_similarity": float(similarity),
+        "graph_ring_density": float(density),
     }

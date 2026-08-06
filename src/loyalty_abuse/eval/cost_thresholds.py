@@ -48,6 +48,10 @@ _SLICE_ABUSE: dict[str, bool] = {
     "sequential_promo": True,
     "ato_known_device": True,
     "graph_payment_ring": True,
+    "gift_card_drain": True,
+    "partner_promo_farm": True,
+    "return_to_points": True,
+    "trial_referral_farm": True,
 }
 
 _MONEY_KEYS = ("points_liability_usd", "discount_usd", "referral_bonus_usd")

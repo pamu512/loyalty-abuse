@@ -5,8 +5,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-SCHEMA_VERSION = 2
-POLICY_VERSION = "friction_v2_4"
+SCHEMA_VERSION = 3
+POLICY_VERSION = "friction_v3_0"
 
 
 class FrictionAction(str, Enum):
@@ -62,3 +62,13 @@ class Decision(BaseModel):
     expected_loss_usd: float = 0.0
     expected_insult_usd: float = 0.0
     p_abuse: float = 0.0
+
+
+class UnifiedDecision(BaseModel):
+    """Friction decision + loyalty-economics advice; economics never denies orders."""
+
+    friction: Decision
+    economics: dict[str, Any] = Field(default_factory=dict)
+    evaluation_mode: str = "live"
+    schema_version: int = SCHEMA_VERSION
+    policy_version: str = POLICY_VERSION

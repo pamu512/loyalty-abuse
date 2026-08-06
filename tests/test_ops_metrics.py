@@ -7,6 +7,7 @@ from loyalty_abuse.economics import expected_loss_usd, liability_usd
 from loyalty_abuse.schema import EventEnvelope, FrictionAction
 from loyalty_abuse_api.analytics import build_ops_metrics
 from loyalty_abuse_api.app import create_app
+from tests.api_helpers import authed_client
 from loyalty_abuse_api.db import Database
 
 

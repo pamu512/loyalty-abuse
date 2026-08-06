@@ -34,7 +34,18 @@ def score(snapshot: dict[str, Any]) -> TypologyResult:
     rarity = float(snapshot.get("graph_shared_attr_rarity") or 0.0)
     # Rarity in [0,1]: high rarity (rare shared attr) strengthens graph channel.
     c_graph_rare = max(0.0, min(1.0, rarity)) if rarity > 0 else 0.0
-    c_graph = soft_or([c_graph_size, c_graph_hop * 0.85, c_graph_rare * 0.6])
+    cluster_n = float(snapshot.get("graph_cluster_size") or 0)
+    # Similarity/density are syndicate signals — do not fire on small household clusters.
+    if cluster_n >= 5:
+        c_sim = sat(
+            float(snapshot.get("graph_cluster_similarity") or 0),
+            *sat_params("graph_cluster_similarity"),
+        )
+        c_density = max(0.0, min(1.0, float(snapshot.get("graph_ring_density") or 0.0)))
+    else:
+        c_sim = 0.0
+        c_density = 0.0
+    c_graph = soft_or([c_graph_size, c_graph_hop * 0.85, c_graph_rare * 0.6, c_sim, c_density * 0.5])
     # Independent evidence families may soft_or.
     young = float(cal.get("young_account_minutes") or 60)
     young_hit = float(snapshot.get("account_age_minutes") or 0) < young and int(

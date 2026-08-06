@@ -4,6 +4,7 @@ from loyalty_abuse import evaluate
 from loyalty_abuse.features import FeatureStore
 from loyalty_abuse.schema import EventEnvelope, EventType
 from loyalty_abuse_api.app import create_app
+from tests.api_helpers import authed_client
 
 
 def test_evaluate_persists_before_200(tmp_path):
