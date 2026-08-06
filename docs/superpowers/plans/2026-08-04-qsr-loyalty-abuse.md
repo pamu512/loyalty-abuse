@@ -37,7 +37,7 @@
 | `src/loyalty_abuse_api/db.py` | SQLite events + decisions |
 | `src/loyalty_abuse_api/analytics.py` | Summary aggregates |
 | `static/index.html` | Minimal analytics dashboard |
-| `scripts/seed_demo.py` | Accertify pattern seed generator |
+| `scripts/seed_demo.py` | Typology pattern seed generator |
 | `notebooks/offline_eval.py` | Threshold / reason coverage script (`.py` so CI-friendly) |
 | `adapters/tarka/README.md` | Optional adapter notes only (no code in v1) |
 | `docker-compose.yml` / `Dockerfile` | Standalone run |
@@ -1104,7 +1104,7 @@ git commit -m "feat: add FastAPI adapter with fail-closed decision audit"
 
 **Interfaces:**
 - Consumes: decision rows from SQLite
-- Produces: summary `{friction_counts, score_histogram, top_reasons, typology_rates, decision_count}`; seed script inserts clean + six Accertify pattern scenarios via HTTP or db
+- Produces: summary `{friction_counts, score_histogram, top_reasons, typology_rates, decision_count}`; seed script inserts clean + six typology pattern scenarios via HTTP or db
 
 - [ ] **Step 1: Write the failing test**
 

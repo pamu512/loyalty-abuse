@@ -2,7 +2,6 @@
 
 **Date:** 2026-08-04  
 **Status:** Draft for implementation  
-**Source framing:** [Accertify — Loyalty Abuse Is The Fraud Risk QSRs Can’t Ignore](https://www.accertify.com/resource/loyalty-abuse-is-the-fraud-risk-qsrs-cant-ignore/)  
 **Approach:** Rules-first explainable score with tiered friction (no review queue)
 
 ## Goal
@@ -110,7 +109,7 @@ Evaluate runs on the triggering event (`signup`, `referral`, `redeem`, `checkout
 
 v1 feature store: in-process counters + link index backed by SQLite. No external Redis/Neo4j required.
 
-## Typologies (Accertify-aligned)
+## Typologies
 
 Score is **0–100**, additive, capped. Each typology emits `{id, points, reasons[]}`.
 
@@ -172,7 +171,7 @@ Thresholds and overrides are tenant-overridable; `policy_version` is recorded on
 
 ## Offline eval & demo
 
-- Seed generator for the six Accertify patterns (plus clean traffic).
+- Seed generator for the six typology patterns (plus clean traffic).
 - Notebook/script over events + decisions: friction distribution, reason coverage, threshold sweeps, fixture precision proxies.
 - Minimal dashboard bound to `/v1/analytics/summary`.
 
