@@ -1,4 +1,4 @@
-# QSR Loyalty Abuse Implementation Plan
+# Loyalty Abuse Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.12, pydantic v2, FastAPI, uvicorn, SQLite (stdlib), pytest, httpx, docker compose
 
-**Spec:** `docs/superpowers/specs/2026-08-04-qsr-loyalty-abuse-design.md`
+**Spec:** `docs/superpowers/specs/2026-08-04-loyalty-abuse-design.md`
 
 ## Global Constraints
 
@@ -124,7 +124,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "loyalty-abuse"
 version = "0.1.0"
-description = "Standalone QSR loyalty abuse scorer with explainable friction"
+description = "Standalone loyalty abuse scorer with explainable friction"
 requires-python = ">=3.12"
 dependencies = [
   "pydantic>=2.7",

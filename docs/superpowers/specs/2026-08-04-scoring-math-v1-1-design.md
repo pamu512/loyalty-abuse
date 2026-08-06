@@ -5,7 +5,7 @@
 **Live policy:** `friction_v2_1` (`src/loyalty_abuse/calibration/friction_v2_1.json`).  
 **Superseded by:** Phase 1 `friction_v1_2` (drop `max_weight_normalize` → `weighted_sum`, soft-OR, multi-window) then Phase 2–4 (`friction_v2_0` / `friction_v2_1`: economics, interactions, soft floors, adversarial claim).  
 **Why archived:** `max_weight_normalize` lets a single typology hit score 100; `points` vs score diverge; synth-500k gates are circular. Kept for provenance, not as a ship target.  
-**Originally superseded scoring behavior in:** `docs/superpowers/specs/2026-08-04-qsr-loyalty-abuse-design.md` (friction ladder + typologies unchanged in *intent*; math upgraded)  
+**Originally superseded scoring behavior in:** `docs/superpowers/specs/2026-08-04-loyalty-abuse-design.md` (friction ladder + typologies unchanged in *intent*; math upgraded)  
 **Policy version (this draft):** `friction_v1_1` (bands unchanged; weights/curves live in a calibration table)
 
 ## Goal

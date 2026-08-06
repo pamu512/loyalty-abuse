@@ -1,4 +1,4 @@
-# A++ Program Design — QSR Loyalty Abuse Engine
+# A++ Program Design — Loyalty Abuse Engine
 
 **Date:** 2026-08-05  
 **Status:** Phase 4 path complete (catch-power `friction_v2_1`, shadow/label loop, ops floor attribution); production A+/A++ not claimed  

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "loyalty-abuse"
 version = "0.1.0"
-description = "Standalone QSR loyalty abuse scorer with explainable friction"
+description = "Standalone loyalty abuse scorer with explainable friction"
 requires-python = ">=3.12"
 dependencies = [
   "pydantic>=2.7",

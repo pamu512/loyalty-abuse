@@ -1,4 +1,4 @@
-# QSR Loyalty Abuse — Design
+# Loyalty Abuse — Design
 
 **Date:** 2026-08-04  
 **Status:** Draft for implementation  
@@ -6,7 +6,7 @@
 
 ## Goal
 
-Detect and interrupt QSR loyalty / promotion abuse across the guest journey with an **explainable score** and **tiered friction up to block**. Ship a **standalone** system that runs on its own and can also be embedded or called by hosts such as Tarka without depending on them.
+Detect and interrupt loyalty / promotion abuse across the guest journey with an **explainable score** and **tiered friction up to block**. Ship a **standalone** system that runs on its own and can also be embedded or called by hosts such as Tarka without depending on them.
 
 ## Non-goals (v1)
 
