@@ -167,5 +167,5 @@ pytest -v
 ## Host adapters
 
 - Incognia: [`adapters/incognia/README.md`](adapters/incognia/README.md)
-- Consortium: no-op `lookup_badness(hashes) -> {}` in [`adapters/consortium/`](adapters/consortium/)
+- Consortium: fail-closed stub — typed `not_configured` / `missing_feed` (never silent `{}`). Live consortium is not shipped. [`adapters/consortium/`](adapters/consortium/)
 - Tarka notes (no code in v1): [`adapters/tarka/README.md`](adapters/tarka/README.md)

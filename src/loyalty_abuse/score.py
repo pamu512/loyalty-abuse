@@ -5,8 +5,10 @@ import uuid
 from loyalty_abuse.calibrate import predict_calibrated
 from loyalty_abuse.calibration import load_calibration
 from loyalty_abuse.device_intel import (
+    INTEL_CONSORTIUM_MISSING_REASON,
     INTEL_HIGH_RISK_REASON,
     INTEL_UNAVAILABLE_REASON,
+    consortium_missing_feed,
     intel_signals_hard_floor,
     intel_unavailable,
 )
@@ -55,6 +57,8 @@ def evaluate(
         reasons.append(INTEL_HIGH_RISK_REASON)
     if intel_unavailable(snap) or intel_unavailable(payload):
         reasons.append(INTEL_UNAVAILABLE_REASON)
+    if consortium_missing_feed(snap) or consortium_missing_feed(payload):
+        reasons.append(INTEL_CONSORTIUM_MISSING_REASON)
     # Order: score band → soft floors → hard floor minimum
     band = policy.action_for(score, force_hard_floor=False)
     snap["band_friction"] = band.value
