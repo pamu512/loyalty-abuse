@@ -13,6 +13,7 @@ from fastapi.responses import PlainTextResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from adapters.consortium import lookup_badness
 from adapters.incognia import env_creds_ready, fetch_signals
 from adapters.incognia.normalize import normalize_assessment
 from loyalty_abuse import evaluate
@@ -135,6 +136,23 @@ def _enrich_incognia(db: Database, event: EventEnvelope) -> EventEnvelope:
         latency_ms=latency_ms,
         force_block=force_block,
     )
+
+
+def _entity_hashes(event: EventEnvelope) -> list[str]:
+    return [
+        str(v)
+        for v in (event.account_id, event.device_id, event.payment_instrument_hash)
+        if v
+    ]
+
+
+def _enrich_consortium(event: EventEnvelope) -> EventEnvelope:
+    """Attach typed consortium stub. Redeem/checkout cannot treat missing feed as clean."""
+    if event.type not in _FAIL_CLOSED_TYPES:
+        return event
+    payload = dict(event.payload) if isinstance(event.payload, dict) else {}
+    payload["consortium"] = lookup_badness(_entity_hashes(event))
+    return event.model_copy(update={"payload": payload})
 
 
 class EventIngestRequest(EventEnvelope):
@@ -427,6 +445,7 @@ def create_app(db_path: str | Path = "loyalty_abuse.db") -> FastAPI:
         event = _resolve_event(app.state.db, body)
         assert_tenant(principal, event.tenant_id)
         event = _enrich_incognia(app.state.db, event)
+        event = _enrich_consortium(event)
         try:
             app.state.db.save_event(event)
         except Exception as exc:

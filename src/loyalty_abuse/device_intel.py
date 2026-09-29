@@ -7,6 +7,9 @@ from typing import Any
 
 INTEL_HIGH_RISK_REASON = "intel.incognia_high_risk"
 INTEL_UNAVAILABLE_REASON = "intel.incognia_unavailable"
+INTEL_CONSORTIUM_MISSING_REASON = "intel.consortium_missing_feed"
+
+_CONSORTIUM_BLOCK_VALUES = frozenset({"missing_feed", "not_configured", "blocked"})
 
 _SIGNAL_KEYS = (
     "risk_assessment",
@@ -68,3 +71,19 @@ def intel_force_hard_floor(snapshot_or_payload: dict) -> bool:
 
 def intel_unavailable(snapshot_or_payload: dict) -> bool:
     return _device_intel(snapshot_or_payload).get("source") == "unavailable"
+
+
+def consortium_missing_feed(snapshot_or_payload: dict) -> bool:
+    """True when a consulted consortium result is a typed missing/not-configured reject.
+
+    Empty / absent consortium is not consulted. A typed reason that callers ignore
+    is still a reject — check status/reason/blocked, never treat nested scores {} as clean.
+    """
+    c = snapshot_or_payload.get("consortium")
+    if not isinstance(c, dict) or not c:
+        return False
+    if c.get("blocked") is True:
+        return True
+    status = c.get("status")
+    reason = c.get("reason")
+    return status in _CONSORTIUM_BLOCK_VALUES or reason in _CONSORTIUM_BLOCK_VALUES
