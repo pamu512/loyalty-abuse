@@ -1,5 +1,7 @@
 # loyalty-abuse
 
+Live Incognia / device-intel is **BLOCKED** (credentials not configured): vendor-gated and fail-closed, not a project defect — see [`docs/compliance/incognia-live.status`](docs/compliance/incognia-live.status).
+
 Standalone loyalty abuse scorer with explainable friction: detect and interrupt promotion abuse across the guest journey with an explainable score and tiered friction up to block.
 
 See [docs/superpowers/specs/2026-08-04-loyalty-abuse-design.md](docs/superpowers/specs/2026-08-04-loyalty-abuse-design.md) for the full design.
