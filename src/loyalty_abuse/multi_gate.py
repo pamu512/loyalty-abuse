@@ -78,11 +78,14 @@ def _parse_trailing_days(window: str, default: int = 7) -> int:
 
 
 def _null_gates(status: str, as_of: str | None = None) -> dict[str, dict[str, Any]]:
+    # Surface the typed fail-closed status on each gate so operators/CI see
+    # why redeem/dispatch are not eligible (empty reasons hid the enum).
+    reasons = [status, f"Loyalty economics {status}; redeem/dispatch not eligible."]
     return {
         name: {
             "eligible": None,
             "status": status,
-            "reasons": [],
+            "reasons": list(reasons),
             "as_of": as_of,
         }
         for name in _GATE_NAMES
