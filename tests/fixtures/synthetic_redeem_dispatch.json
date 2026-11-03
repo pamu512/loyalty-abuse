@@ -1,0 +1,53 @@
+{
+  "schema_id": "loyalty_abuse.synthetic_redeem_dispatch/v1",
+  "synthetic": true,
+  "production_evidence": false,
+  "note": "SYNTHETIC redeem/dispatch-shaped pack. Not live tenant data. Not production evidence. Do not cite as live intel, live consortium, or live economics proof.",
+  "evaluation_mode": "live",
+  "event": {
+    "event_id": "syn_rd_redeem_1",
+    "tenant_id": "syn-tenant-acme",
+    "ts": "2026-08-06T12:00:00Z",
+    "type": "redeem",
+    "account_id": "syn-acct-8841",
+    "session_id": "syn-sess-12f9",
+    "device_id": "syn-dev-ios-77",
+    "ip": "203.0.113.44",
+    "email": "member.8841@example.test",
+    "phone": "+15555550199",
+    "payment_instrument_hash": "syn_pi_9f3a",
+    "payload": {
+      "reward_id": "rw_free_night",
+      "points": 25000,
+      "offer_ids": ["tier-burn", "partner-hotel"],
+      "channel": "app",
+      "fulfillment": {
+        "kind": "dispatch",
+        "destination": "partner_hotel",
+        "confirmation_id": "syn-disp-4401"
+      }
+    }
+  },
+  "feed_snapshot": null,
+  "program_config": {
+    "schema_id": "loyalty_abuse.loyalty_program_config/v1",
+    "program_id": "default",
+    "config_version": "1",
+    "effective_at": "2026-01-01T00:00:00Z",
+    "acquisition_cost_minor": 2500,
+    "retention_cost_minor": 500,
+    "target_loyalty_ltv_ratio": 0.12,
+    "ineligible_above_ratio": 0.25,
+    "restore_at_or_below_ratio": 0.12,
+    "min_dwell_seconds": 86400,
+    "window": "trailing_90d",
+    "velocity_window": "trailing_7d",
+    "new_member_grace_days": 0,
+    "vip_entity_ids": [],
+    "max_feed_age_seconds": 86400
+  },
+  "scope": {
+    "kind": "program",
+    "id": "default"
+  }
+}

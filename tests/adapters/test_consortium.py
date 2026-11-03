@@ -13,3 +13,5 @@ def test_lookup_badness_returns_typed_missing_feed():
         assert result.get("reason") == "missing_feed"
         assert result.get("blocked") is True
         assert result.get("scores") == {}
+        assert result.get("operator_reason")
+        assert "not configured" in str(result.get("operator_reason")).lower()

@@ -59,6 +59,12 @@ def evaluate(
         reasons.append(INTEL_UNAVAILABLE_REASON)
     if consortium_missing_feed(snap) or consortium_missing_feed(payload):
         reasons.append(INTEL_CONSORTIUM_MISSING_REASON)
+        consortium = snap.get("consortium") if isinstance(snap.get("consortium"), dict) else {}
+        if not consortium and isinstance(payload.get("consortium"), dict):
+            consortium = payload["consortium"]
+        operator_reason = consortium.get("operator_reason")
+        if isinstance(operator_reason, str) and operator_reason and operator_reason not in reasons:
+            reasons.append(operator_reason)
     # Order: score band → soft floors → hard floor minimum
     band = policy.action_for(score, force_hard_floor=False)
     snap["band_friction"] = band.value
